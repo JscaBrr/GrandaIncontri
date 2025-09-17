@@ -22,7 +22,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # disattiva cache statici in dev
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "cambia-questa-chiave-in-produzione")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "7cfd9f2e6b3d41a8a3e1f59c64b95d76")
 
 # =============================================================================
 # CONFIGURAZIONE SMTP
