@@ -1,0 +1,579 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Profili{% endblock %}
+{% block content %}
+
+<div class="posts-wrapper">
+
+  <!-- =========================================================================
+       BARRA AZIONI ADMIN (solo autenticati)
+       ========================================================================= -->
+  {% if current_user.is_authenticated %}
+    <div class="d-flex bg-light border-bottom justify-content-center align-items-center py-2">
+      <div class="d-flex flex-wrap justify-content-center gap-2">
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#site-modal-profile">Inserisci profilo</button>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- =========================================================================
+       INTRO PUBBLICA (solo non autenticati)
+       ========================================================================= -->
+  <div class="container my-3 px-4">
+  {% if not current_user.is_authenticated %}
+    <div class="p-4 mb-4 bg-light rounded shadow-sm text-center">
+      <h2 class="text-primary fw-bold mb-3">Come funziona</h2>
+      <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-4">
+        <div class="d-flex flex-column align-items-center">
+          <i class="bi bi-journal-text fs-1 text-primary"></i>
+          <p class="mt-2 fw-semibold">1. Leggi gli annunci scorrendo verso il basso</p>
+        </div>
+        <div class="d-flex flex-column align-items-center">
+          <i class="bi bi-chat-dots fs-1 text-primary"></i>
+          <p class="mt-2 fw-semibold">2. Scrivi alla persona giusta per te</p>
+        </div>
+        <div class="d-flex flex-column align-items-center">
+          <i class="bi bi-envelope-heart fs-1 text-primary"></i>
+          <p class="mt-2 fw-semibold">3. Aspetta di essere ricontattato</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+    <!-- =======================================================================
+         FILTRI DI RICERCA (lasciati invariati)
+         ======================================================================= -->
+    <div class="p-3 mb-4 bg-light rounded shadow-sm">
+      <h5 class="text-primary fw-bold mb-3">Inserisci le tue preferenze <small class="text-muted">(opzionale)</small></h5>
+      <form method="GET" action="{{ url_for('annunci') }}">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label small text-primary fw-bold">Cerco</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="gender" id="cercoUomo" value="male"
+                       {% if request.args.get('gender','')|lower == 'male' %}checked{% endif %}>
+                <label class="form-check-label" for="cercoUomo"><i class="bi bi-gender-male text-primary me-1"></i> Uomo</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="gender" id="cercoDonna" value="female"
+                       {% if request.args.get('gender','')|lower == 'female' %}checked{% endif %}>
+                <label class="form-check-label" for="cercoDonna"><i class="bi bi-gender-female text-danger me-1"></i> Donna</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small text-primary fw-bold">Fascia d’età</label>
+            {% set sel_age = request.args.get('age_range','') %}
+            <select class="form-select" name="age_range">
+              <option value=""        {% if sel_age == '' %}selected{% endif %}>Qualsiasi</option>
+              <option value="25-35"   {% if sel_age == '25-35' %}selected{% endif %}>25 - 35</option>
+              <option value="35-45"   {% if sel_age == '35-45' %}selected{% endif %}>35 - 45</option>
+              <option value="45-55"   {% if sel_age == '45-55' %}selected{% endif %}>45 - 55</option>
+              <option value="55+"     {% if sel_age == '55+' %}selected{% endif %}>Oltre 55</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small text-primary fw-bold">Colore capelli</label>
+            {% set sel_hair = request.args.get('hair_color','')|lower %}
+            <select class="form-select" name="hair_color">
+              <option value=""         {% if sel_hair == '' %}selected{% endif %}>Qualsiasi</option>
+              <option value="biondi"   {% if sel_hair == 'biondi' %}selected{% endif %}>Biondi</option>
+              <option value="castani"  {% if sel_hair == 'castani' %}selected{% endif %}>Castani</option>
+              <option value="neri"     {% if sel_hair == 'neri' %}selected{% endif %}>Neri</option>
+              <option value="rossi"    {% if sel_hair == 'rossi' %}selected{% endif %}>Rossi</option>
+              <option value="grigi"    {% if sel_hair == 'grigi' %}selected{% endif %}>Grigi</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label small text-primary fw-bold">Colore occhi</label>
+            {% set sel_eyes = request.args.get('eyes_color','')|lower %}
+            <select class="form-select" name="eyes_color">
+              <option value=""          {% if sel_eyes == '' %}selected{% endif %}>Qualsiasi</option>
+              <option value="castani"   {% if sel_eyes == 'castani' %}selected{% endif %}>Castani</option>
+              <option value="azzurri"   {% if sel_eyes == 'azzurri' %}selected{% endif %}>Azzurri</option>
+              <option value="verdi"     {% if sel_eyes == 'verdi' %}selected{% endif %}>Verdi</option>
+              <option value="grigi"     {% if sel_eyes == 'grigi' %}selected{% endif %}>Grigi</option>
+              <option value="nocciola"  {% if sel_eyes == 'nocciola' %}selected{% endif %}>Nocciola</option>
+            </select>
+          </div>
+
+          {% if current_user.is_authenticated %}
+            <div class="col-md-4">
+              <label class="form-label small text-primary fw-bold">Nome</label>
+              <input type="text" class="form-control" name="name"
+                     value="{{ request.args.get('name','') }}"
+                     placeholder="es. Carlo">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small text-primary fw-bold">ID profilo</label>
+              <input type="number" class="form-control"
+                name="id" min="1" step="1" inputmode="numeric" pattern="\d*"
+                value="{{ request.args.get('id','') }}" placeholder="es. 123">
+            </div>
+          {% endif %}
+
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary px-4">Filtra</button>
+            <a href="{{ url_for('annunci') }}" class="btn btn-outline-secondary ms-2">Reset</a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- =======================================================================
+         RIEPILOGO FILTRI + CONTEGGIO
+         ======================================================================= -->
+    {% set n = listObjProfiles|length %}
+    <div class="d-flex align-items-center mb-3 gap-2
+                flex-column-reverse flex-md-row
+                justify-content-center justify-content-md-between">
+      <div class="fw-semibold mt-2 mt-md-0 text-center text-md-start w-100 w-md-auto">
+        {{ n }} profil{{ 'o' if n==1 else 'i' }}
+      </div>
+
+      <div class="d-flex flex-wrap gap-2
+                  justify-content-center justify-content-md-end w-100 w-md-auto">
+        {% if current_user.is_authenticated and request.args.get('filter_id') %}
+          <span class="badge bg-info text-dark">ID: #{{ request.args.get('id') }}</span>
+        {% endif %}
+        {% if request.args.get('gender') %}
+          <span class="badge bg-primary">Cerco: {{ 'Uomo' if request.args.get('gender')=='male' else 'Donna' }}</span>
+        {% endif %}
+        {% if current_user.is_authenticated and request.args.get('name') %}
+          <span class="badge bg-secondary">Nome: {{ request.args.get('name') }}</span>
+        {% endif %}
+        {% if request.args.get('age_range') %}
+          <span class="badge bg-secondary">Età: {{ request.args.get('age_range') }}</span>
+        {% endif %}
+        {% if request.args.get('hair_color') %}
+          <span class="badge bg-secondary">Capelli: {{ request.args.get('hair_color') }}</span>
+        {% endif %}
+        {% if request.args.get('eyes_color') %}
+          <span class="badge bg-secondary">Occhi: {{ request.args.get('eyes_color') }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         LISTA PROFILI
+         ======================================================================= -->
+    {% if listObjProfiles %}
+      <div class="row g-4">
+        {% for p in listObjProfiles %}
+          {% set eta = (current_year - p['birth_year']) if p['birth_year'] else None %}
+          {% set fuma = (p['smoker'] in [1, '1', true, 'true', 'on']) if p['smoker'] is not none else None %}
+          {% set stato = (p['marital_status'] or '') %}
+          {% if stato %}
+            {% if stato|lower in ['celibe/nubile','single'] %}
+              {% set stato_it = 'nubile' if p['gender'] == 'female' else 'celibe' %}
+            {% elif stato|lower in ['sposato/a','married'] %}
+              {% set stato_it = 'sposata' if p['gender'] == 'female' else 'sposato' %}
+            {% elif stato|lower in ['separato/a','separated'] %}
+              {% set stato_it = 'separata' if p['gender'] == 'female' else 'separato' %}
+            {% elif stato|lower in ['divorziato/a','divorced'] %}
+              {% set stato_it = 'divorziata' if p['gender'] == 'female' else 'divorziato' %}
+            {% elif stato|lower in ['vedovo/a','widowed'] %}
+              {% set stato_it = 'vedova' if p['gender'] == 'female' else 'vedovo' %}
+            {% else %}
+              {% set stato_it = stato %}
+            {% endif %}
+          {% else %}
+            {% set stato_it = '' %}
+          {% endif %}
+         {% set parts = [] %}
+
+          {# Età #}
+          {% if eta %}{% set _ = parts.append(eta ~ ' anni') %}{% endif %}
+
+          {# Professione #}
+          {% if p['occupation'] %}{% set _ = parts.append(p['occupation']) %}{% endif %}
+
+          {# Capelli e occhi #}
+          {% if p['hair_color'] %}{% set _ = parts.append('capelli ' ~ p['hair_color']) %}{% endif %}
+          {% if p['eyes_color'] %}{% set _ = parts.append('occhi ' ~ p['eyes_color']) %}{% endif %}
+
+          {# Altezza e peso #}
+          {% if p['height_cm'] %}{% set _ = parts.append(p['height_cm'] ~ ' cm') %}{% endif %}
+          {% if p['weight_kg'] %}{% set _ = parts.append(p['weight_kg'] ~ ' kg') %}{% endif %}
+
+          {# Stato civile #}
+          {% if stato_it %}{% set _ = parts.append(stato_it) %}{% endif %}
+
+          {# Fumo con genere #}
+          {% if fuma is not none %}
+            {% if p['gender'] == 'female' %}
+              {% set _ = parts.append('fumatrice' if fuma else 'non fumatrice') %}
+            {% else %}
+              {% set _ = parts.append('fumatore' if fuma else 'non fumatore') %}
+            {% endif %}
+          {% endif %}
+
+          <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body d-flex flex-column">
+
+                <div class="profile-header">
+                  <div class="profile-name">
+                    {% if current_user.is_authenticated %}
+                      {{ (p['first_name'] ~ ' ' ~ (p['last_name'] or ''))|trim|upper }}
+                    {% else %}
+                      {{ p['first_name']|upper }}
+                    {% endif %}
+                  </div>
+
+                  {% if current_user.is_authenticated and p['id'] %}
+                    <span class="badge rounded-pill bg-info text-dark">ID #{{ p['id'] }}</span>
+                  {% endif %}
+                </div>
+
+                {# ===== DETTAGLI IN UN’UNICA RIGA, MAIUSCOLO ===== #}
+                <div class="text-uppercase text-secondary small profile-meta mb-2">
+                  {{ parts|join(', ')|upper }}
+                </div>
+
+                {# ===== BIO: 5 righe + "continua a leggere" ===== #}
+                {% set bio_text = (p['bio'] or '') %}
+                <div class="bio-block flex-grow-1" data-lines="5">
+                  <div class="small bio-textbox">
+                    <div class="bio-text">
+                      {{ (p['bio'] or '') | e }}
+                    </div>
+                  </div>
+
+                  <div class="read-more-line d-none">
+                    <span class="dots">...</span>
+                    <button type="button" class="read-more" aria-expanded="false">Continua a leggere</button>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-2 gap-2">
+                  {% if not current_user.is_authenticated %}
+                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#replyModal-{{ p['id'] }}">
+                      <i class="bi bi-heart"></i><span class="ms-1">Scrivi a {{ p['first_name'] }}</span>
+                    </a>
+                  {% endif %}
+
+                  {% if current_user.is_authenticated %}
+                    <div class="d-flex gap-2">
+                      <a href="{{ url_for('annunci', profile_id=p['id']) }}" class="btn btn-outline-secondary btn-sm" title="Modifica">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <form action="{{ url_for('create_or_update_profile') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="profile_id" value="{{ p['id'] | e }}">
+                        <button type="submit" name="action" value="delete" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Eliminare questo profilo?');" title="Elimina">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {# =====================================================================
+             MODAL: SCRIVI AL PROFILO
+             ===================================================================== #}
+          <div class="modal fade" id="replyModal-{{ p['id'] }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Scrivi a {{ p['first_name'] }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body">
+                  <p class="mb-3">Compila i campi sottostanti:</p>
+                  <form action="{{ url_for('send_message') }}" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="profile_id" value="{{ p['id'] }}">
+                    <input type="hidden" name="profile_name" value="{{ p['first_name'] }} {{ p['last_name'] or '' }}">
+
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label small" for="sender_name_{{ p['id'] }}">Nome *</label>
+                        <input type="text" class="form-control" id="sender_name_{{ p['id'] }}" name="sender_name" required>
+                        <div class="invalid-feedback">Per favore inserisci il tuo nome.</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label small" for="sender_phone_{{ p['id'] }}">Cellulare *</label>
+                        <input type="tel" class="form-control" id="sender_phone_{{ p['id'] }}" name="sender_phone" required>
+                        <div class="invalid-feedback">Inserisci un numero di cellulare.</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label small" for="sender_email_{{ p['id'] }}">Email *</label>
+                        <input type="email" class="form-control" id="sender_email_{{ p['id'] }}" name="sender_email" required>
+                        <div class="invalid-feedback">Inserisci un’email valida.</div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label small" for="sender_job_{{ p['id'] }}">Lavoro (facoltativo)</label>
+                        <input type="text" class="form-control" id="sender_job_{{ p['id'] }}" name="sender_job">
+                      </div>
+
+                      <div class="col-md-4">
+                        <label class="form-label small" for="sender_age_{{ p['id'] }}">Età *</label>
+                        <input type="number" min="18" max="120" class="form-control" id="sender_age_{{ p['id'] }}" name="sender_age" required>
+                        <div class="invalid-feedback">Inserisci la tua età (18–120).</div>
+                      </div>
+
+                      <div class="col-md-8">
+                        <label class="form-label small" for="sender_city_{{ p['id'] }}">Città *</label>
+                        <input type="text" class="form-control" id="sender_city_{{ p['id'] }}" name="sender_city" required>
+                        <div class="invalid-feedback">Inserisci la tua città.</div>
+                      </div>
+
+                      <div class="col-12">
+                        <label class="form-label small" for="sender_message_{{ p['id'] }}">Un tuo commento libero</label>
+                        <textarea class="form-control" rows="4" id="sender_message_{{ p['id'] }}" name="sender_message"></textarea>
+                      </div>
+                    </div>
+
+                   <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="privacy_{{ p['id'] }}" name="agree_privacy" required>
+                    <label class="form-check-label small" for="privacy_{{ p['id'] }}">
+                      Ho accettato l’<a href="https://www.iubenda.com/privacy-policy/7777397" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        class="text-primary custom-a">
+                        informativa sul trattamento dei dati personali
+                      </a>
+                    </label>
+                    <div class="invalid-feedback">Devi accettare l’informativa privacy.</div>
+                  </div>
+
+
+                    <div class="modal-footer mt-4">
+                      <button type="submit" class="btn btn-primary">Contatta</button>
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Torna indietro</button>
+                    </div>
+                  </form>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div> {# /container #}
+
+  <!-- =========================================================================
+       MODAL CREAZIONE/MODIFICA PROFILO (solo autenticati)
+       ========================================================================= -->
+  {% if current_user.is_authenticated %}
+  <div class="modal fade" id="site-modal-profile" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5">{{ 'Modifica profilo' if profile_to_edit else 'Crea profilo' }}</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <form action="{{ url_for('create_or_update_profile') }}" method="POST">
+            <input type="hidden" name="profile_id" value="{{ (profile_to_edit.id if profile_to_edit else '') | e }}">
+
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small">Nome *</label>
+                <input type="text" class="form-control" name="first_name" required
+                       value="{{ (profile_to_edit.first_name if profile_to_edit else '') | e }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Cognome</label>
+                <input type="text" class="form-control" name="last_name"
+                       value="{{ (profile_to_edit.last_name if profile_to_edit else '') | e }}">
+              </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+              <div class="col-md-6">
+                <label class="form-label small">Genere *</label>
+                {% set gsel = (profile_to_edit.gender if profile_to_edit else '') %}
+                <select class="form-select" name="gender" required>
+                  <option value="" {% if not gsel %}selected{% endif %}>Seleziona...</option>
+                  <option value="female" {% if gsel == 'female' %}selected{% endif %}>Donna</option>
+                  <option value="male" {% if gsel == 'male' %}selected{% endif %}>Uomo</option>
+                  <option value="other" {% if gsel == 'other' %}selected{% endif %}>Altro</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Anno di nascita</label>
+                <input type="number" class="form-control" name="birth_year" min="1900" max="2100"
+                       value="{{ (profile_to_edit.birth_year if profile_to_edit else '') | e }}">
+              </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+              <div class="col-md-6">
+                <label class="form-label small">Città</label>
+                <input type="text" class="form-control" name="city"
+                       value="{{ (profile_to_edit.city if profile_to_edit else '') | e }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Occupazione</label>
+                <input type="text" class="form-control" name="occupation"
+                       value="{{ (profile_to_edit.occupation if profile_to_edit else '') | e }}">
+              </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+              <div class="col-md-4">
+                <label class="form-label small">Colore occhi</label>
+                {% set esel = (profile_to_edit.eyes_color if profile_to_edit else '') %}
+                <select class="form-select" name="eyes_color">
+                  <option value="" {% if not esel %}selected{% endif %}>Seleziona...</option>
+                  <option value="Azzurri"  {% if esel == 'Azzurri' %}selected{% endif %}>Azzurri</option>
+                  <option value="Verdi"    {% if esel == 'Verdi' %}selected{% endif %}>Verdi</option>
+                  <option value="Marroni"  {% if esel == 'Marroni' %}selected{% endif %}>Marroni</option>
+                  <option value="Neri"     {% if esel == 'Neri' %}selected{% endif %}>Neri</option>
+                  <option value="Grigi"    {% if esel == 'Grigi' %}selected{% endif %}>Grigi</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">Colore capelli</label>
+                {% set hsel = (profile_to_edit.hair_color if profile_to_edit else '') %}
+                <select class="form-select" name="hair_color">
+                  <option value="" {% if not hsel %}selected{% endif %}>Seleziona...</option>
+                  <option value="Biondi"   {% if hsel == 'Biondi' %}selected{% endif %}>Biondi</option>
+                  <option value="Castani"  {% if hsel == 'Castani' %}selected{% endif %}>Castani</option>
+                  <option value="Neri"     {% if hsel == 'Neri' %}selected{% endif %}>Neri</option>
+                  <option value="Rossi"    {% if hsel == 'Rossi' %}selected{% endif %}>Rossi</option>
+                  <option value="Grigi"    {% if hsel == 'Grigi' %}selected{% endif %}>Grigi</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">Altezza (cm)</label>
+                <input type="number" class="form-control" name="height_cm" min="100" max="250"
+                       value="{{ (profile_to_edit.height_cm if profile_to_edit else '') | e }}">
+              </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+              <div class="col-md-4">
+                <label class="form-label small">Peso (kg)</label>
+                <input type="number" class="form-control" name="weight_kg" min="30" max="300" step="1"
+                       value="{{ (profile_to_edit.weight_kg if profile_to_edit else '') | e }}">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">Stato civile</label>
+                {% set msel = (profile_to_edit.marital_status if profile_to_edit else '') %}
+                <select class="form-select" name="marital_status">
+                  <option value="" {% if not msel %}selected{% endif %}>Seleziona...</option>
+                  <option value="Celibe/Nubile" {% if msel == 'Celibe/Nubile' %}selected{% endif %}>Celibe/Nubile</option>
+                  <option value="Sposato/a"     {% if msel == 'Sposato/a' %}selected{% endif %}>Sposato/a</option>
+                  <option value="Separato/a"    {% if msel == 'Separato/a' %}selected{% endif %}>Separato/a</option>
+                  <option value="Divorziato/a"  {% if msel == 'Divorziato/a' %}selected{% endif %}>Divorziato/a</option>
+                  <option value="Vedovo/a"      {% if msel == 'Vedovo/a' %}selected{% endif %}>Vedovo/a</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+              <div class="col-md-4">
+                <div class="form-check mt-4">
+                  <input class="form-check-input" type="checkbox" name="smoker" id="smoker"
+                         {% if profile_to_edit and profile_to_edit.smoker %}checked{% endif %}>
+                  <label class="form-check-label small" for="smoker">Fumatore</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label small">Bio *</label>
+              <textarea class="form-control" name="bio" rows="4" required>{{ profile_to_edit.bio if profile_to_edit else '' }}</textarea>
+            </div>
+
+            <div class="modal-footer mt-3 px-0">
+              {% if profile_to_edit %}
+                <button name="action" value="update" type="submit" class="btn btn-primary btn-sm">Aggiorna</button>
+                <button name="action" value="delete" type="submit" class="btn btn-outline-danger btn-sm"
+                        onclick="return confirm('Eliminare questo profilo?');">Elimina</button>
+              {% else %}
+                <button type="submit" class="btn btn-primary btn-sm">Salva profilo</button>
+              {% endif %}
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal">Annulla</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- =========================================================================
+       SCRIPT APERTURA MODALE MODIFICA PROFILO
+       ========================================================================= -->
+  {% if to_edit %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var myModal = new bootstrap.Modal(document.getElementById('site-modal-profile'));
+      myModal.show();
+    });
+  </script>
+  {% endif %}
+
+</div> {# /posts-wrapper #}
+
+<!-- ===========================================================================
+     SCRIPT: BIO 5 RIGHE + CONTINUA A LEGGERE, E VALIDAZIONE MODALI
+     =========================================================================== -->
+<script>
+(() => {
+  function setupBio(block){
+    if (block.dataset.initialized) return;
+    block.dataset.initialized = '1';
+
+    const box  = block.querySelector('.bio-textbox');   // wrapper
+    const txt  = block.querySelector('.bio-text');      // elemento clamped
+    const line = block.querySelector('.read-more-line');
+    const dots = line && line.querySelector('.dots');
+    const btn  = line && line.querySelector('.read-more');
+    if (!box || !txt || !line || !dots || !btn) return;
+
+    // testo già presente nel DOM (preserva \n)
+    const full = (txt.textContent || '').trim();
+    if (!full){ txt.textContent=''; line.classList.add('d-none'); return; }
+
+    // numero di righe dal data-attribute (default 5)
+    const maxLines = Number(block.dataset.lines || 5);
+    txt.style.setProperty('--lines', String(maxLines));
+
+    // serve "continua a leggere"?
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const needMore = txt.scrollHeight > txt.clientHeight + 1;
+        if (needMore){
+          line.classList.remove('d-none');
+          btn.setAttribute('aria-expanded','false');
+          btn.textContent = 'Continua a leggere';
+          dots.textContent = '...';
+        } else {
+          line.classList.add('d-none');
+        }
+      });
+    });
+
+    // toggle espansione
+    btn.addEventListener('click', () => {
+      const expanded = box.classList.toggle('expanded');
+      btn.textContent = expanded ? 'Mostra meno' : 'Continua a leggere';
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      dots.textContent = expanded ? '' : '...';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.bio-block').forEach(setupBio);
+  });
+})();
+</script>
+
+{% endblock %}

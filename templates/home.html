@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block home_active %}active{% endblock %}
+{% block title %}Granda Incontri{% endblock %}
+{% block content %}
+
+<!-- =========================================================================
+     HERO
+     ========================================================================= -->
+<section class="hero position-relative overflow-hidden">
+  <img id="hero-image"
+       src="{{ url_for('static', filename='images/photo1.png') }}"
+       alt="Benvenuta/o su Granda Incontri"
+       class="hero-img position-absolute top-0 start-0 w-100 h-100">
+
+  <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100"></div>
+
+  <div class="hero-content position-absolute bottom-0 start-50 translate-middle-x w-100 text-center pb-4">
+    <div class="container">
+      <h1 class="display-5 fw-semibold text-white mb-2">Trova l'Amore con Granda Incontri</h1>
+      <p class="lead text-white mb-3">
+        Siamo un’agenzia nata a Cuneo e Alba: ogni giorno lavoriamo con passione
+        per aiutare le persone a incontrarsi e costruire nuove relazioni autentiche. Scopri i profili appena pubblicati e scrivi alla persona giusta per te.
+      </p>
+      <a href="{{ url_for('annunci') }}" class="btn btn-primary btn-lg d-inline-block px-4">
+        Visualizza annunci
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<div class="after-hero-bg">
+
+  <!-- =========================================================================
+       CONTATORI
+       ========================================================================= -->
+  <div class="container py-4">
+    <div class="row justify-content-center g-4">
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h3 class="fw-bold">Per gli uomini</h3>
+            <p class="fs-4 text-primary mb-1"><span id="counter-women">0</span> profili femminili disponibili ora</p>
+            <p class="text-muted">Scopri i profili femminili che cercano nuove emozioni e connessioni autentiche.</p>
+            <a href="{{ url_for('annunci', gender='female') }}" class="btn btn-primary">Visualizza annunci</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <h3 class="fw-bold">Per le donne</h3>
+            <p class="fs-4 text-primary mb-1"><span id="counter-men">0</span> profili maschili disponibili ora</p>
+            <p class="text-muted">Incontra uomini pronti a condividere esperienze sincere e nuove avventure.</p>
+            <a href="{{ url_for('annunci', gender='male') }}" class="btn btn-primary">Visualizza annunci</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       ULTIMI PROFILI (STILE ANNUNCI, SCORRIMENTO ORIZZONTALE)
+       ========================================================================= -->
+  <section id="site-novita" class="container-fluid px-0 mt-4">
+    <div class="container py-2">
+      <h5 class="mb-3 text-white">Ultimi profili pubblicati</h5>
+
+      {% if latest_profiles %}
+      <div class="d-flex flex-row overflow-auto pb-1 gap-3">
+        {% for p in latest_profiles %}
+          {% set eta = (current_year - p['birth_year']) if p['birth_year'] else None %}
+          {% set fuma = (p['smoker'] in [1, '1', true, 'true', 'on']) if p['smoker'] is not none else None %}
+          {% set stato = (p['marital_status'] or '') %}
+          {% if stato %}
+            {% if stato|lower in ['celibe/nubile','single'] %}
+              {% set stato_it = 'nubile' if p['gender'] == 'female' else 'celibe' %}
+            {% elif stato|lower in ['sposato/a','married'] %}
+              {% set stato_it = 'sposata' if p['gender'] == 'female' else 'sposato' %}
+            {% elif stato|lower in ['separato/a','separated'] %}
+              {% set stato_it = 'separata' if p['gender'] == 'female' else 'separato' %}
+            {% elif stato|lower in ['divorziato/a','divorced'] %}
+              {% set stato_it = 'divorziata' if p['gender'] == 'female' else 'divorziato' %}
+            {% elif stato|lower in ['vedovo/a','widowed'] %}
+              {% set stato_it = 'vedova' if p['gender'] == 'female' else 'vedovo' %}
+            {% else %}
+              {% set stato_it = stato %}
+            {% endif %}
+          {% else %}
+            {% set stato_it = '' %}
+          {% endif %}
+
+          {% set parts = [] %}
+          {% if eta %}{% set _ = parts.append(eta ~ ' anni') %}{% endif %}
+          {% if p['occupation'] %}{% set _ = parts.append(p['occupation']) %}{% endif %}
+          {% if p['hair_color'] %}{% set _ = parts.append('capelli ' ~ p['hair_color']) %}{% endif %}
+          {% if p['eyes_color'] %}{% set _ = parts.append('occhi ' ~ p['eyes_color']) %}{% endif %}
+          {% if p['height_cm'] %}{% set _ = parts.append(p['height_cm'] ~ ' cm') %}{% endif %}
+          {% if p['weight_kg'] %}{% set _ = parts.append(p['weight_kg'] ~ ' kg') %}{% endif %}
+          {% if stato_it %}{% set _ = parts.append(stato_it) %}{% endif %}
+          {% if fuma is not none %}
+            {% if p['gender'] == 'female' %}
+              {% set _ = parts.append('fumatrice' if fuma else 'non fumatrice') %}
+            {% else %}
+              {% set _ = parts.append('fumatore' if fuma else 'non fumatore') %}
+            {% endif %}
+          {% endif %}
+
+          <div class="card shadow-sm border-0 flex-shrink-0" style="min-width:260px; max-width:270px; min-height: 353px;">
+            <div class="card-body d-flex flex-column">
+
+              <!-- Nome -->
+              <div class="profile-header">
+                <div class="profile-name">{{ (p['first_name'] or '')|trim|upper }}</div>
+              </div>
+
+              <!-- Dettagli -->
+              <div class="text-uppercase text-secondary small profile-meta mb-2">
+                {{ parts|join(', ')|upper }}
+              </div>
+
+              <!-- Bio -->
+              <div class="bio-block flex-grow-1" data-lines="5">
+  <div class="small bio-textbox">
+    <div class="bio-text">{{ (p['bio'] or '') | e }}</div>
+  </div>
+</div>
+
+              <!-- CTA -->
+              <div class="d-flex justify-content-center mt-2">
+                <a href="{{ url_for('annunci', open=p['id']) }}" class="btn btn-sm btn-primary">Scopri di più</a>
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <div class="alert text-center w-100 rounded p-3 mt-2 mx-0" role="alert">
+          Nessun profilo pubblicato
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SEDI
+       ========================================================================= -->
+  <div class="container mt-5 px-4">
+    <h5 class="mb-3 text-white">Le nostre sedi a tua disposizione</h5>
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <img src="{{ url_for('static', filename='images/cuneoMap.png') }}" class="card-img-top object-fit-cover" style="max-height:150px;" alt="Mappa Cuneo">
+          <div class="card-body text-center">
+            <p class="mb-3 text-muted"><span class="fw-bold fs-5">Corso Nizza, 49</span><br>12100 Cuneo (CN)</p>
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+              <a href="https://wa.me/393911879136?text={{ 'Ciao, vorrei maggiori informazioni sulla sede di Cuneo' | urlencode }}"
+                 target="_blank" rel="noopener" class="btn btn-success d-inline-flex align-items-center gap-2">
+                <i class="bi bi-whatsapp"></i><span>Chiedi info</span>
+              </a>
+              <a href="tel:+393911879136" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-telephone"></i><span>Chiama</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <img src="{{ url_for('static', filename='images/albaMap.png') }}" class="card-img-top object-fit-cover" style="max-height:150px;" alt="Mappa Alba">
+          <div class="card-body text-center">
+            <p class="mb-3 text-muted"><span class="fw-bold fs-5">Via Giuseppe Romita, 3</span><br>12051 Alba (CN)</p>
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+              <a href="https://wa.me/393911879136?text={{ 'Ciao, vorrei maggiori informazioni sulla sede di Alba' | urlencode }}"
+                 target="_blank" rel="noopener" class="btn btn-success d-inline-flex align-items-center gap-2">
+                <i class="bi bi-whatsapp"></i><span>Chiedi info</span>
+              </a>
+              <a href="tel:+393911879136" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-telephone"></i><span>Chiama</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% for i in listStagesImages %}
+        <div class="col-6 col-sm-6 col-md-3">
+          <div class="card h-100 shadow-sm">
+            <img src="{{ url_for('static', filename=i) }}" class="card-img-top object-fit-cover" style="max-height:200px;" alt="Sede {{ loop.index }}">
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================================
+     SCRIPT: COUNTERS
+     ========================================================================= -->
+<script>
+  function animateCounter(id, target, duration = 1200) {
+    const el = document.getElementById(id);
+    let start = 0;
+    const increment = Math.max(1, Math.ceil(target / (duration / 20)));
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= target) { start = target; clearInterval(timer); }
+      el.textContent = start;
+    }, 20);
+  }
+  animateCounter("counter-women", {{ available_women_count|int }});
+  animateCounter("counter-men",   {{ available_men_count|int }});
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const heroImg = document.getElementById("hero-image");
+    const mq = window.matchMedia("(min-width: 992px)");
+
+    // immagini per mobile
+    const mobileImages = [
+      "{{ url_for('static', filename='images/photo1.png') }}",
+      "{{ url_for('static', filename='images/photo5.png') }}",
+      "{{ url_for('static', filename='images/photo2.png') }}",
+      "{{ url_for('static', filename='images/photo6.png') }}"
+    ];
+
+    // immagini per desktop
+    const desktopImages = [
+      "{{ url_for('static', filename='images/1photo.png') }}",
+      "{{ url_for('static', filename='images/2photo.png') }}",
+      "{{ url_for('static', filename='images/4photo.png') }}",
+      "{{ url_for('static', filename='images/3photo.png') }}"
+    ];
+
+    // funzione che sceglie il set giusto
+    function currentSet() {
+      return mq.matches ? desktopImages : mobileImages;
+    }
+
+    let set = currentSet();
+    let i = 0;
+    heroImg.src = set[0];
+
+    function tick() {
+      i = (i + 1) % set.length;
+      heroImg.src = set[i];
+    }
+    let timer = setInterval(tick, 4000);
+
+    // quando cambia dimensione schermo → resetta lo slideshow con il set giusto
+    mq.addEventListener("change", () => {
+      clearInterval(timer);
+      set = currentSet();
+      i = 0;
+      heroImg.src = set[0];
+      timer = setInterval(tick, 4000);
+    });
+  });
+</script>
+
+{% endblock %}

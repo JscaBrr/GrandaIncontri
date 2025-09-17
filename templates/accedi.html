@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block login_active %}active{% endblock %}
+{% block title %}Accedi{% endblock %}
+{% block content %}
+
+<div class="row justify-content-md-center">
+  <form action="{{ url_for('process_login') }}" method="POST"
+        class="col-8 col-sm-6 col-md-4 mx-auto row bg-body-tertiary border border-light-subtle rounded-1 my-4">
+
+    <div class="col-12 p-2 border-bottom text-center">
+      <h1 class="fs-3">Accedi all'area riservata</h1>
+    </div>
+
+    <!-- password -->
+    <div class="col-12 p-3">
+      <label for="txt_password" class="form-label custom-form-small-text">Password</label>
+      <input type="password" class="form-control" name="txt_password" id="txt_password"
+             placeholder="Inserisci la password" required />
+      {% if dictErrors and dictErrors.get('txt_password') %}
+        <div class="text-danger custom-form-small-text">{{ dictErrors.get('txt_password') }}</div>
+      {% endif %}
+    </div>
+
+    <!-- pulsante invio -->
+    <div class="col-12 p-3 d-flex justify-content-center">
+      <button type="submit" class="btn btn-primary">Invia</button>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
