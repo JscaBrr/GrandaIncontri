@@ -351,6 +351,24 @@
   /* Chi siamo */
   .gi-badge { width: 120px; height: 120px; }
   .gi-icon  { font-size: 48px; }
+
+  .gi-step .dot{
+    width: 14px;
+    aspect-ratio: 1 / 1;   /* garantisce 1:1 */
+    height: auto;          /* si adatta all'aspect-ratio */
+    border-radius: 50%;
+    box-shadow: none;      /* niente spread che può ovalizzare */
+    outline: 4px solid rgba(255,20,147,.20); /* anello esterno */
+    outline-offset: 3px;   /* distanza dall’anello */
+    margin-top: .5rem;     /* leggermente più centrato */
+  }
+
+  .gi-cta .btn{
+    display: block;
+    width: 100%;
+    max-width: 420px;   /* opzionale, per non farli troppo larghi */
+    margin: 0 auto .75rem;  /* separazione verticale + centrati */
+  }
 }
 
 

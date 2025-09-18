@@ -44,7 +44,7 @@
          ======================================================================= -->
     <div class="p-3 mb-4 bg-light rounded shadow-sm">
       <h5 class="text-primary fw-bold mb-3">Inserisci le tue preferenze <small class="text-muted">(opzionale)</small></h5>
-      <form method="GET" action="{{ url_for('annunci') }}">
+      <form method="GET" action="{{ url_for('annunci') }}#first-result">
         <div class="row g-3">
           <div class="col-12">
             <label class="form-label small text-primary fw-bold">Cerco</label>
@@ -118,7 +118,7 @@
 
           <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary px-4">Filtra</button>
-            <a href="{{ url_for('annunci') }}" class="btn btn-outline-secondary ms-2">Reset</a>
+            <a href="{{ url_for('annunci') }}#first-result" class="btn btn-outline-secondary ms-2">Reset</a>
           </div>
         </div>
       </form>
@@ -162,7 +162,7 @@
          LISTA PROFILI
          ======================================================================= -->
     {% if listObjProfiles %}
-      <div class="row g-4">
+      <div class="row g-4" >
         {% for p in listObjProfiles %}
           {% set eta = (current_year - p['birth_year']) if p['birth_year'] else None %}
           {% set fuma = (p['smoker'] in [1, '1', true, 'true', 'on']) if p['smoker'] is not none else None %}
@@ -212,7 +212,7 @@
             {% endif %}
           {% endif %}
 
-          <div class="col-12 col-sm-6 col-lg-4">
+          <div class="col-12 col-sm-6 col-lg-4" {% if loop.first %}id="first-result"{% endif %}>
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body d-flex flex-column">
 
@@ -575,5 +575,108 @@
   });
 })();
 </script>
+
+<!-- ===========================================================================
+     SCRIPT VALIDAZIONE CLIENT
+     =========================================================================== -->
+<script>
+(function () {
+  'use strict';
+
+  const rePhone = /^[0-9\s()+.-]{8,}$/;
+  const rePhoneDigits = /^\D*(\d\D*){8,}$/;
+  const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  function validateField(input, testFn, msgIfInvalid, optional=false) {
+    const val = input.value.trim();
+    const ok = optional ? (val === '' || testFn(val)) : testFn(val);
+    input.classList.toggle('is-invalid', !ok);
+    input.classList.toggle('is-valid', ok && val !== '');
+    if (!ok && msgIfInvalid) {
+      const fb = input.closest('.col, .mb-3, .form-group')?.querySelector('.invalid-feedback')
+                 || input.parentElement.querySelector('.invalid-feedback');
+      if (fb) fb.textContent = msgIfInvalid;
+    }
+    return ok;
+  }
+
+  function wireUpForm(form) {
+    const name    = form.querySelector('[name="sender_name"]');
+    const phone   = form.querySelector('[name="sender_phone"]');
+    const email   = form.querySelector('[name="sender_email"]');
+    const age     = form.querySelector('[name="sender_age"]');
+    const city    = form.querySelector('[name="sender_city"]');
+    const job     = form.querySelector('[name="sender_job"]');
+    const message = form.querySelector('[name="sender_message"]');
+    const privacy = form.querySelector('[name="agree_privacy"]');
+
+    if (!name || !phone || !email || !age || !city || !privacy) return;
+
+    // On blur per obbligatori
+    name.addEventListener('blur', () => validateField(name, v => v.length >= 2, 'Inserisci almeno 2 caratteri.'));
+    phone.addEventListener('blur', () => {
+      const ok = rePhone.test(phone.value) && rePhoneDigits.test(phone.value);
+      validateField(phone, () => ok, 'Inserisci un numero valido (min. 8 cifre).');
+    });
+    email.addEventListener('blur', () => validateField(email, v => reEmail.test(v), 'Inserisci un’email valida.'));
+    age.addEventListener('blur', () => {
+      const n = parseInt(age.value, 10);
+      validateField(age, () => !isNaN(n) && n >= 18 && n <= 120, 'Età tra 18 e 120.');
+    });
+    city.addEventListener('blur', () => validateField(city, v => v.length >= 2, 'Inserisci la città.'));
+    privacy.addEventListener('change', () => {
+      privacy.classList.toggle('is-invalid', !privacy.checked);
+      privacy.classList.toggle('is-valid', privacy.checked);
+    });
+
+    // On blur per facoltativi
+    if (job) job.addEventListener('blur', () => validateField(job, v => v.length >= 2, '', true));
+    if (message) message.addEventListener('blur', () => validateField(message, v => v.length >= 5, '', true));
+
+    // Submit finale
+    form.addEventListener('submit', (e) => {
+      let ok = true;
+
+      ok &= validateField(name, v => v.length >= 2, 'Inserisci almeno 2 caratteri.');
+      ok &= (function(){
+        const pOK = rePhone.test(phone.value) && rePhoneDigits.test(phone.value);
+        return validateField(phone, () => pOK, 'Inserisci un numero valido (min. 8 cifre).');
+      })();
+      ok &= validateField(email, v => reEmail.test(v), 'Inserisci un’email valida.');
+      ok &= (function(){
+        const n = parseInt(age.value, 10);
+        return validateField(age, () => !isNaN(n) && n >= 18 && n <= 120, 'Età tra 18 e 120.');
+      })();
+      ok &= validateField(city, v => v.length >= 2, 'Inserisci la città.');
+
+      // Facoltativi (verdi se compilati bene)
+      if (job) validateField(job, v => v.length >= 2, '', true);
+      if (message) validateField(message, v => v.length >= 5, '', true);
+
+      if (!privacy.checked) {
+        privacy.classList.add('is-invalid');
+        privacy.classList.remove('is-valid');
+        ok &= false;
+      }
+
+      if (!form.checkValidity()) ok = false;
+      form.classList.add('was-validated');
+
+      if (!ok) {
+        e.preventDefault();
+        e.stopPropagation();
+        const firstInvalid = form.querySelector('.is-invalid, :invalid');
+        if (firstInvalid) firstInvalid.focus();
+      }
+    }, false);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form.needs-validation[action$="send_message"]').forEach(wireUpForm);
+  });
+
+})();
+</script>
+
 
 {% endblock %}
