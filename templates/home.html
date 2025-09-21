@@ -18,7 +18,7 @@
     <div class="container">
       <h1 class="display-5 fw-semibold text-white mb-2">Trova l'Amore con Granda Incontri</h1>
       <p class="lead text-white mb-3">
-        Siamo un’agenzia nata a Cuneo e Alba: ogni giorno lavoriamo con passione
+        Siamo un’agenzia con radici a Cuneo e Alba: ogni giorno lavoriamo con passione
         per aiutare le persone a incontrarsi e costruire nuove relazioni autentiche. Scopri i profili appena pubblicati e scrivi alla persona giusta per te.
       </p>
       <a href="{{ url_for('annunci') }}" class="btn btn-primary btn-lg d-inline-block px-4">
@@ -96,7 +96,10 @@
           {% if p['occupation'] %}{% set _ = parts.append(p['occupation']) %}{% endif %}
           {% if p['hair_color'] %}{% set _ = parts.append('capelli ' ~ p['hair_color']) %}{% endif %}
           {% if p['eyes_color'] %}{% set _ = parts.append('occhi ' ~ p['eyes_color']) %}{% endif %}
-          {% if p['height_cm'] %}{% set _ = parts.append(p['height_cm'] ~ ' cm') %}{% endif %}
+          {% if p['height_cm'] %}
+            {% set h_m = p['height_cm'] / 100.0 %}
+            {% set _ = parts.append(('%.2f'|format(h_m)) ~ ' m') %}
+          {% endif %}
           {% if p['weight_kg'] %}{% set _ = parts.append(p['weight_kg'] ~ ' kg') %}{% endif %}
           {% if stato_it %}{% set _ = parts.append(stato_it) %}{% endif %}
           {% if fuma is not none %}
@@ -122,10 +125,10 @@
 
               <!-- Bio -->
               <div class="bio-block flex-grow-1" data-lines="5">
-  <div class="small bio-textbox">
-    <div class="bio-text">{{ (p['bio'] or '') | e }}</div>
-  </div>
-</div>
+                <div class="small bio-textbox">
+                  <div class="bio-text">{{ (p['bio'] or '') | e }}</div>
+                </div>
+              </div>
 
               <!-- CTA -->
               <div class="d-flex justify-content-center mt-2">
@@ -150,41 +153,54 @@
   <div class="container mt-5 px-4">
     <h5 class="mb-3 text-white">Le nostre sedi a tua disposizione</h5>
     <div class="row g-3">
-      <div class="col-12 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <img src="{{ url_for('static', filename='images/cuneoMap.png') }}" class="card-img-top object-fit-cover" style="max-height:150px;" alt="Mappa Cuneo">
-          <div class="card-body text-center">
-            <p class="mb-3 text-muted"><span class="fw-bold fs-5">Corso Nizza, 49</span><br>12100 Cuneo (CN)</p>
-            <div class="d-flex gap-2 justify-content-center flex-wrap">
-              <a href="https://wa.me/393911879136?text={{ 'Ciao, vorrei maggiori informazioni sulla sede di Cuneo' | urlencode }}"
-                 target="_blank" rel="noopener" class="btn btn-success d-inline-flex align-items-center gap-2">
-                <i class="bi bi-whatsapp"></i><span>Chiedi info</span>
-              </a>
-              <a href="tel:+393911879136" class="btn btn-primary d-inline-flex align-items-center gap-2">
-                <i class="bi bi-telephone"></i><span>Chiama</span>
-              </a>
-            </div>
+    <!-- CUNEO -->
+    <div class="col-12 col-md-6">
+      <div class="card h-100 shadow-sm location-card position-relative">
+        <span class="city-pill">CUNEO</span>
+        <img src="{{ url_for('static', filename='images/cuneoMap.png') }}" class="card-img-top object-fit-cover" style="max-height:150px;" alt="Mappa Cuneo">
+        <div class="card-body text-center">
+          <span class="office-city mb-2">CUNEO</span>
+          <p class="office-address mb-3 text-muted">
+            <span class="fw-bold">Corso Nizza, 49</span><br>
+            <small>12100 (CN)</small>
+          </p>
+          <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a href="https://wa.me/393911879136?text={{ 'Ciao, vorrei maggiori informazioni sulla sede di Cuneo' | urlencode }}"
+              target="_blank" rel="noopener" class="btn btn-success d-inline-flex align-items-center gap-2">
+              <i class="bi bi-whatsapp"></i><span>Chiedi info</span>
+            </a>
+            <a href="tel:+393911879136" class="btn btn-primary d-inline-flex align-items-center gap-2">
+              <i class="bi bi-telephone"></i><span>Chiama</span>
+            </a>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="col-12 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <img src="{{ url_for('static', filename='images/albaMap.png') }}" class="card-img-top object-fit-cover" style="max-height:150px;" alt="Mappa Alba">
-          <div class="card-body text-center">
-            <p class="mb-3 text-muted"><span class="fw-bold fs-5">Via Giuseppe Romita, 3</span><br>12051 Alba (CN)</p>
-            <div class="d-flex gap-2 justify-content-center flex-wrap">
-              <a href="https://wa.me/393911879136?text={{ 'Ciao, vorrei maggiori informazioni sulla sede di Alba' | urlencode }}"
-                 target="_blank" rel="noopener" class="btn btn-success d-inline-flex align-items-center gap-2">
-                <i class="bi bi-whatsapp"></i><span>Chiedi info</span>
-              </a>
-              <a href="tel:+393911879136" class="btn btn-primary d-inline-flex align-items-center gap-2">
-                <i class="bi bi-telephone"></i><span>Chiama</span>
-              </a>
-            </div>
+    <!-- ALBA -->
+    <div class="col-12 col-md-6">
+      <div class="card h-100 shadow-sm location-card position-relative">
+        <span class="city-pill">ALBA</span>
+        <img src="{{ url_for('static', filename='images/albaMap.png') }}" class="card-img-top object-fit-cover" style="max-height:150px;" alt="Mappa Alba">
+        <div class="card-body text-center">
+          <span class="office-city mb-2">ALBA</span>
+          <p class="office-address mb-3 text-muted">
+            <span class="fw-bold">Via Giuseppe Romita, 3/2</span><br>
+            <small>12051 (CN)</small>
+          </p>
+          <div class="d-flex gap-2 justify-content-center flex-wrap">
+            <a href="https://wa.me/393911879136?text={{ 'Ciao, vorrei maggiori informazioni sulla sede di Alba' | urlencode }}"
+              target="_blank" rel="noopener" class="btn btn-success d-inline-flex align-items-center gap-2">
+              <i class="bi bi-whatsapp"></i><span>Chiedi info</span>
+            </a>
+            <a href="tel:+393911879136" class="btn btn-primary d-inline-flex align-items-center gap-2">
+              <i class="bi bi-telephone"></i><span>Chiama</span>
+            </a>
           </div>
         </div>
       </div>
+    </div>
+
 
       {% for i in listStagesImages %}
         <div class="col-6 col-sm-6 col-md-3">

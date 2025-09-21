@@ -1,12 +1,31 @@
 /* ==========================================================================
    0) IMPORT & VARIABILI
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Yeseva+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;500;600;700&family=Yeseva+One&display=swap');
 
 :root {
   --gi-deep:  #1a1a40;
   --gi-berry: #5b0a2f;
   --gi-pink:  #ff1493;
+
+  --font-sans: 'Lato', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --font-brand: 'Yeseva One', serif;
+}
+
+/* Base testo */
+html, body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* Claim principale (hero) */
+.hero-content h1,
+.hero-title-yeseva,
+.profile-name {
+  font-family: var(--font-brand);
 }
 
 
@@ -37,6 +56,17 @@
   z-index: 2;
 }
 
+/* Hero: paragrafo più spesso e leggibile */
+.hero-content .lead {
+  font-family: 'Lato', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  letter-spacing: .01em;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 2px 8px rgba(0,0,0,.28);
+}
+
 
 /* ==========================================================================
    2) SFONDI PAGINE
@@ -54,7 +84,7 @@
   background: linear-gradient(135deg, #ff1a8c 0%, #00e6ff 50%, #1a00ff 100%);
   min-height: 100vh;
   margin: 0;
-  padding: 0 0 3rem;   /* top 0 come richiesto */
+  padding: 0 0 3rem;
 }
 
 
@@ -157,6 +187,7 @@
 .profile-meta {
   font-weight: 700;
   letter-spacing: .02em;
+  margin-bottom: .25rem; /* meno spazio sotto i meta → come in home */
 }
 
 .profile-header {
@@ -197,24 +228,24 @@
   font-size: .975rem !important;
 }
 
-/* L’ELEMENTO CLAMPATO È .bio-text */
 .bio-text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--lines, 5);
   overflow: hidden;
-
-  /* Rispetta gli a capo reali del DB */
   white-space: pre-line;
-
-  /* Riserva sempre spazio per N righe */
   min-height: calc(var(--lines) * 1lh);
 }
 
-/* Quando la .bio-textbox è espansa rimuovi il clamp */
 .bio-textbox.expanded .bio-text {
   -webkit-line-clamp: unset;
 }
+
+.bio-block .bio-text {
+  font-style: italic;
+}
+
+.read-more-line { font-style: normal; }
 
 @supports not (height: 1lh) {
   .bio-text {
@@ -236,6 +267,15 @@
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
+}
+
+/* Uniforma la spaziatura bio in annunci con la home */
+.posts-wrapper .profile-meta {
+  margin-bottom: .25rem !important;
+}
+.posts-wrapper .bio-block {
+  margin-top: 0 !important;
+  gap: .15rem !important;
 }
 
 
@@ -317,57 +357,33 @@
    9) RESPONSIVE
    ========================================================================== */
 @media (max-width: 576px) {
-  /* hero quadrato su mobile */
-  .hero {
-    height: auto;
-    position: relative;
-  }
-
-  .hero::before {
-    content: "";
-    display: block;
-    padding-top: 100%;
-  }
-
+  .hero { height: auto; position: relative; }
+  .hero::before { content: ""; display: block; padding-top: 100%; }
   .hero-img,
-  .hero-overlay {
-    position: absolute !important;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  .hero-content {
-    position: absolute !important;
-    left: 50% !important;
-    bottom: 0 !important;
-    transform: translateX(-50%);
-    width: 100%;
-  }
-
+  .hero-overlay { position: absolute !important; inset: 0; width: 100%; height: 100%; }
+  .hero-content { position: absolute !important; left: 50% !important; bottom: 0 !important; transform: translateX(-50%); width: 100%; }
   .hero-content .display-5 { font-size: 1.8rem; }
-  .hero-content .lead      { font-size: 1rem; }
+  .hero-content .lead { font-size: 1rem; }
 
-  /* Chi siamo */
   .gi-badge { width: 120px; height: 120px; }
   .gi-icon  { font-size: 48px; }
 
   .gi-step .dot{
     width: 14px;
-    aspect-ratio: 1 / 1;   /* garantisce 1:1 */
-    height: auto;          /* si adatta all'aspect-ratio */
+    aspect-ratio: 1 / 1;
+    height: auto;
     border-radius: 50%;
-    box-shadow: none;      /* niente spread che può ovalizzare */
-    outline: 4px solid rgba(255,20,147,.20); /* anello esterno */
-    outline-offset: 3px;   /* distanza dall’anello */
-    margin-top: .5rem;     /* leggermente più centrato */
+    box-shadow: none;
+    outline: 4px solid rgba(255,20,147,.20);
+    outline-offset: 3px;
+    margin-top: .5rem;
   }
 
   .gi-cta .btn{
     display: block;
     width: 100%;
-    max-width: 420px;   /* opzionale, per non farli troppo larghi */
-    margin: 0 auto .75rem;  /* separazione verticale + centrati */
+    max-width: 420px;
+    margin: 0 auto .75rem;
   }
 }
 
@@ -385,7 +401,6 @@
   padding: .35rem .6rem;
 }
 
-/* Bottoni nelle card: centrati e larghi quanto il testo */
 .card .card-body > .btn {
   width: auto;
   flex: 0 0 auto;
@@ -394,3 +409,40 @@
   white-space: nowrap;
   gap: .5rem;
 }
+
+.location-card { overflow: hidden; }
+
+.city-pill{
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: .3rem .75rem;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--gi-deep);
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  z-index: 3;
+  border: 2px solid rgba(0,0,0,.06);
+}
+
+.office-city{
+  font-family: 'Yeseva One', serif;
+  font-size: 1.6rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--gi-deep);
+}
+
+.office-address{
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+@media (max-width: 576px){
+  .office-city{ font-size: 1.35rem; }
+  .city-pill{ top: 8px; left: 8px; padding: .25rem .6rem; font-size: .85rem; }
+}
+

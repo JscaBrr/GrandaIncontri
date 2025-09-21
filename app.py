@@ -39,7 +39,6 @@ MAIL_TO = os.getenv("MAIL_TO", "barroerojessica@yahoo.com")
 # =============================================================================
 ADMIN_PASSCODE = os.getenv("ADMIN_PASSCODE", "0990")
 
-
 # =============================================================================
 # UTILITY: PROFILI PUBBLICATI
 # =============================================================================
@@ -64,7 +63,6 @@ def get_published_profiles_with_status():
             list_profiles.append(profile)
     return list_profiles
 
-
 # =============================================================================
 # CONTEXT PROCESSOR: CURRENT USER FINTO
 # =============================================================================
@@ -75,7 +73,6 @@ def inject_current_user():
             self.is_authenticated = is_auth
             self.role = role
     return dict(current_user=CurrentUserStub(session.get("is_authenticated", False)))
-
 
 # =============================================================================
 # DECORATOR: PROTEZIONE ROTTE RISERVATE
@@ -88,7 +85,6 @@ def require_auth(view_func):
             return redirect(url_for("accedi"))
         return view_func(*args, **kwargs)
     return wrapper
-
 
 # =============================================================================
 # ROTTE PUBBLICHE: HOME, CHI SIAMO, PROFILO
@@ -130,7 +126,6 @@ def home():
 def chisiamo():
     return render_template("chisiamo.html")
 
-
 # =============================================================================
 # AUTH: ACCEDI / ESCI / AREA RISERVATA
 # =============================================================================
@@ -169,7 +164,6 @@ def esci():
 @require_auth
 def area_riservata():
     return redirect(url_for("annunci"))
-
 
 # =============================================================================
 # ANNUNCI (EX POSTS)
@@ -230,7 +224,6 @@ def annunci():
         current_year=datetime.date.today().year
     )
 
-
 # =============================================================================
 # REDIRECT DI COMPATIBILITÀ (301)
 # =============================================================================
@@ -249,7 +242,6 @@ def login_legacy():
 @app.route("/logout")
 def logout_legacy():
     return redirect(url_for("esci"), code=301)
-
 
 # =============================================================================
 # HELPER COMUNI
@@ -336,7 +328,6 @@ def _profile_matches_filters(p: dict,
 
     return True
 
-
 # =============================================================================
 # CREA / AGGIORNA / ELIMINA PROFILO
 # =============================================================================
@@ -362,22 +353,50 @@ def create_or_update_profile():
     occupation = (form.get("occupation") or "").strip()
     eyes_color = (form.get("eyes_color") or "").strip()
     hair_color = (form.get("hair_color") or "").strip()
-    height_cm  = _to_int(form.get("height_cm"))
-    weight_kg  = _to_int(form.get("weight_kg"))
-    marital_status = (form.get("marital_status") or "").strip()
-    smoker     = _cb_to_int(form.get("smoker"))
-    bio        = (form.get("bio") or "").strip()
-    is_active  = 1
+
+    # Altezza in metri → DB in cm
+    def _to_float(v):
+        try:
+            if v is None or str(v).strip() == "":
+                return None
+            return float(str(v).replace(",", "."))
+        except Exception:
+            return None
+
+    height_m = _to_float(form.get("height_m"))
+    if height_m is not None:
+        height_cm = int(round(height_m * 100))
+    else:
+        height_cm = _to_int(form.get("height_cm"))
+
+    # se update, non sovrascrivere con None
+    if profile_id and height_cm is None:
+        old = profiles_dao.get_profile_by_id(int(profile_id))
+        if old and old.get("height_cm") is not None:
+            height_cm = int(old["height_cm"])
+
+    weight_kg       = _to_int(form.get("weight_kg"))
+    marital_status  = (form.get("marital_status") or "").strip()
+    smoker          = _cb_to_int(form.get("smoker"))
+    bio             = (form.get("bio") or "").strip()
+    is_active       = 1
 
     # === VALIDAZIONE ===
     errors = []
     if not first_name: errors.append("Il nome è obbligatorio.")
     if not gender: errors.append("Il genere è obbligatorio.")
     if not bio: errors.append("La bio è obbligatoria.")
+    if height_m is not None and not (1.00 <= height_m <= 2.50):
+        errors.append("L’altezza deve essere tra 1.00 m e 2.50 m.")
+
     if errors:
         for e in errors:
             flash(e, "danger")
-        return redirect(url_for("annunci", profile_id=profile_id or ""))
+        # Solo in caso di errore su un update, mantieni l’ID
+        if profile_id:
+            return redirect(url_for("annunci", profile_id=profile_id))
+        else:
+            return redirect(url_for("annunci"))
 
     # === UPDATE o INSERT ===
     if profile_id:
@@ -397,8 +416,8 @@ def create_or_update_profile():
         )
         flash("Profilo creato e pubblicato!", "success")
 
+    # Redirect pulito (nessun profile_id) così “Inserisci profilo” parte vuoto
     return redirect(url_for("annunci"))
-
 
 # =============================================================================
 # INVIO EMAIL
@@ -423,7 +442,6 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
         return True, None
     except Exception as e:
         return False, str(e)
-
 
 # =============================================================================
 # ROUTE: INVIO MESSAGGIO

@@ -197,7 +197,10 @@
           {% if p['eyes_color'] %}{% set _ = parts.append('occhi ' ~ p['eyes_color']) %}{% endif %}
 
           {# Altezza e peso #}
-          {% if p['height_cm'] %}{% set _ = parts.append(p['height_cm'] ~ ' cm') %}{% endif %}
+          {% if p['height_cm'] %}
+            {% set h_m = p['height_cm'] / 100.0 %}
+            {% set _ = parts.append(('%.2f'|format(h_m)) ~ ' m') %}
+          {% endif %}
           {% if p['weight_kg'] %}{% set _ = parts.append(p['weight_kg'] ~ ' kg') %}{% endif %}
 
           {# Stato civile #}
@@ -239,9 +242,7 @@
                 {% set bio_text = (p['bio'] or '') %}
                 <div class="bio-block flex-grow-1" data-lines="5">
                   <div class="small bio-textbox">
-                    <div class="bio-text">
-                      {{ (p['bio'] or '') | e }}
-                    </div>
+                    <div class="bio-text">{{ (p['bio'] or '') | e }}</div>
                   </div>
 
                   <div class="read-more-line d-none">
@@ -450,9 +451,13 @@
                 </select>
               </div>
               <div class="col-md-4">
-                <label class="form-label small">Altezza (cm)</label>
-                <input type="number" class="form-control" name="height_cm" min="100" max="250"
-                       value="{{ (profile_to_edit.height_cm if profile_to_edit else '') | e }}">
+                <label class="form-label small">Altezza (m)</label>
+                <input
+                type="number"
+                class="form-control"
+                name="height_m"
+                min="1.00" max="2.50" step="0.01" inputmode="decimal"
+                value="{{ ('%.2f'|format((profile_to_edit.height_cm|float) / 100.0)) if (profile_to_edit and profile_to_edit.height_cm) else '' }}">
               </div>
             </div>
 
@@ -511,16 +516,78 @@
   <!-- =========================================================================
        SCRIPT APERTURA MODALE MODIFICA PROFILO
        ========================================================================= -->
-  {% if to_edit %}
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      var myModal = new bootstrap.Modal(document.getElementById('site-modal-profile'));
-      myModal.show();
+      const modalEl = document.getElementById('site-modal-profile');
+      if (!modalEl) return;
+      const form = modalEl.querySelector('form');
+
+      function resetProfileFormToCreate() {
+        if (!form) return;
+
+        // id vuoto = modalità "create"
+        const hid = form.querySelector('[name="profile_id"]');
+        if (hid) hid.value = '';
+
+        // input text/number/textarea -> vuoti
+        ['first_name','last_name','city','occupation','birth_year','height_m','weight_kg','bio']
+          .forEach(n => { const el = form.querySelector(`[name="${n}"]`); if (el) el.value = ''; });
+
+        // select -> prima opzione (placeholder)
+        ['gender','eyes_color','hair_color','marital_status']
+          .forEach(n => { const el = form.querySelector(`[name="${n}"]`); if (el) el.selectedIndex = 0; });
+
+        // checkbox -> off
+        const smoker = form.querySelector('[name="smoker"]');
+        if (smoker) smoker.checked = false;
+
+        // pulizia validazione bootstrap
+        form.classList.remove('was-validated');
+        form.querySelectorAll('.is-valid, .is-invalid').forEach(el => {
+          el.classList.remove('is-valid','is-invalid');
+        });
+
+        // UI: titolo modale
+        const title = modalEl.querySelector('.modal-title');
+        if (title) title.textContent = 'Crea profilo';
+
+        // UI: bottoni footer (adatta la versione "update" a "create")
+        const submitBtn = modalEl.querySelector('.modal-footer button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.textContent = 'Salva profilo';
+          submitBtn.name = '';         // niente action esplicita → insert
+          submitBtn.value = '';
+          submitBtn.classList.remove('btn-outline-danger'); // sicurezza
+          submitBtn.classList.add('btn-primary');
+        }
+        // nascondi l’eventuale bottone "Elimina"
+        const deleteBtn = modalEl.querySelector('.modal-footer button.btn-outline-danger[name="action"][value="delete"]');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+      }
+
+      // Click su "Inserisci profilo" → apri modale in modalità "create"
+      document.querySelectorAll('[data-bs-target="#site-modal-profile"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          resetProfileFormToCreate();
+        });
+      });
+
+      // Quando il modale viene chiuso → pulisco l’URL da ?profile_id
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('profile_id')) {
+          url.searchParams.delete('profile_id');
+          window.history.replaceState({}, '', url);
+        }
+      });
+
+      // Se arrivo con ?profile_id=… mostro subito il modale in modalità "edit"
+      {% if to_edit %}
+        const myModal = new bootstrap.Modal(modalEl);
+        myModal.show();
+      {% endif %}
     });
   </script>
-  {% endif %}
-
-</div> {# /posts-wrapper #}
 
 <!-- ===========================================================================
      SCRIPT: BIO 5 RIGHE + CONTINUA A LEGGERE, E VALIDAZIONE MODALI
@@ -580,27 +647,76 @@
      SCRIPT VALIDAZIONE CLIENT
      =========================================================================== -->
 <script>
-(function () {
-  'use strict';
+document.addEventListener('DOMContentLoaded', () => {
+  // ---------- helpers stile bootstrap ----------
+  const setNeutral = el => el.classList.remove('is-valid','is-invalid');
+  const setValid   = el => { el.classList.add('is-valid'); el.classList.remove('is-invalid'); };
+  const setInvalid = (el, msg) => {
+    el.classList.add('is-invalid');
+    el.classList.remove('is-valid');
+    ensureFeedback(el, msg);
+  };
 
-  const rePhone = /^[0-9\s()+.-]{8,}$/;
-  const rePhoneDigits = /^\D*(\d\D*){8,}$/;
-  const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  function ensureFeedback(input, msg){
+    let fb = input.closest('.col, .mb-3, .form-group')?.querySelector('.invalid-feedback')
+           || input.parentElement.querySelector('.invalid-feedback');
+    if (!fb) {
+      fb = document.createElement('div');
+      fb.className = 'invalid-feedback';
+      input.parentElement.appendChild(fb);
+    }
+    if (msg) fb.textContent = msg;
+  }
 
-  function validateField(input, testFn, msgIfInvalid, optional=false) {
-    const val = input.value.trim();
-    const ok = optional ? (val === '' || testFn(val)) : testFn(val);
-    input.classList.toggle('is-invalid', !ok);
-    input.classList.toggle('is-valid', ok && val !== '');
-    if (!ok && msgIfInvalid) {
-      const fb = input.closest('.col, .mb-3, .form-group')?.querySelector('.invalid-feedback')
-                 || input.parentElement.querySelector('.invalid-feedback');
-      if (fb) fb.textContent = msgIfInvalid;
+  const toFloat = v => {
+    const s = String(v ?? '').trim().replace(',', '.');
+    if (!s) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  };
+
+  function validateField(input, { required=false, test=()=>true, normalize=v=>v, msg='' } = {}, { fromBlur=false } = {}) {
+    if (!input) return true;
+
+    const raw = input.value ?? '';
+    const val = normalize(raw);
+
+    if (!required && (String(val).trim() === '' || val === null)) {
+      setNeutral(input);
+      return true;
+    }
+
+    const ok = test(val);
+    if (ok) setValid(input);
+    else {
+      if (fromBlur || required || String(val).trim() !== '') setInvalid(input, msg);
+      else setNeutral(input);
     }
     return ok;
   }
 
-  function wireUpForm(form) {
+  // ============================================================
+  // Funzione comune: collega blur + input live
+  function attachValidation(el, rule) {
+    if (!el) return;
+    // blur = prima validazione
+    el.addEventListener('blur', () => validateField(el, rule, { fromBlur:true }));
+    // input = se era invalid, controlla live
+    el.addEventListener('input', () => {
+      if (el.classList.contains('is-invalid')) {
+        validateField(el, rule, { fromBlur:false });
+      }
+    });
+  }
+
+  // ======================================================================
+  // 1) MODALI "SCRIVI A …"
+  // ======================================================================
+  const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const rePhone = /^[0-9\s()+.-]{8,}$/;
+  const rePhoneDigits = /^\D*(\d\D*){8,}$/;
+
+  document.querySelectorAll('form.needs-validation[action$="send_message"]').forEach(form => {
     const name    = form.querySelector('[name="sender_name"]');
     const phone   = form.querySelector('[name="sender_phone"]');
     const email   = form.querySelector('[name="sender_email"]');
@@ -610,73 +726,100 @@
     const message = form.querySelector('[name="sender_message"]');
     const privacy = form.querySelector('[name="agree_privacy"]');
 
-    if (!name || !phone || !email || !age || !city || !privacy) return;
+    const rules = new Map([
+      [name,    { required:true,  test:v => String(v).trim().length >= 2,  msg:'Inserisci almeno 2 caratteri.' }],
+      [phone,   { required:true,  test:v => rePhone.test(v) && rePhoneDigits.test(v), msg:'Numero non valido: servono almeno 8 cifre.' }],
+      [email,   { required:true,  test:v => reEmail.test(v), msg:'Inserisci un’email valida.' }],
+      [age,     { required:true,  test:v => Number.isInteger(+v) && +v>=18 && +v<=120, msg:'Età non valida (18–120).' }],
+      [city,    { required:true,  test:v => String(v).trim().length >= 2, msg:'Inserisci la tua città.' }],
+      [job,     { required:false, test:v => String(v).trim().length >= 2, msg:'Almeno 2 caratteri (oppure lascia vuoto).' }],
+      [message, { required:false, test:v => String(v).trim().length >= 5, msg:'Almeno 5 caratteri (oppure lascia vuoto).' }],
+    ]);
 
-    // On blur per obbligatori
-    name.addEventListener('blur', () => validateField(name, v => v.length >= 2, 'Inserisci almeno 2 caratteri.'));
-    phone.addEventListener('blur', () => {
-      const ok = rePhone.test(phone.value) && rePhoneDigits.test(phone.value);
-      validateField(phone, () => ok, 'Inserisci un numero valido (min. 8 cifre).');
-    });
-    email.addEventListener('blur', () => validateField(email, v => reEmail.test(v), 'Inserisci un’email valida.'));
-    age.addEventListener('blur', () => {
-      const n = parseInt(age.value, 10);
-      validateField(age, () => !isNaN(n) && n >= 18 && n <= 120, 'Età tra 18 e 120.');
-    });
-    city.addEventListener('blur', () => validateField(city, v => v.length >= 2, 'Inserisci la città.'));
-    privacy.addEventListener('change', () => {
-      privacy.classList.toggle('is-invalid', !privacy.checked);
-      privacy.classList.toggle('is-valid', privacy.checked);
+    rules.forEach((rule, el) => attachValidation(el, rule));
+
+    privacy?.addEventListener('change', () => {
+      privacy.checked ? setValid(privacy) : setInvalid(privacy, 'Devi accettare l’informativa privacy.');
     });
 
-    // On blur per facoltativi
-    if (job) job.addEventListener('blur', () => validateField(job, v => v.length >= 2, '', true));
-    if (message) message.addEventListener('blur', () => validateField(message, v => v.length >= 5, '', true));
-
-    // Submit finale
     form.addEventListener('submit', (e) => {
       let ok = true;
-
-      ok &= validateField(name, v => v.length >= 2, 'Inserisci almeno 2 caratteri.');
-      ok &= (function(){
-        const pOK = rePhone.test(phone.value) && rePhoneDigits.test(phone.value);
-        return validateField(phone, () => pOK, 'Inserisci un numero valido (min. 8 cifre).');
-      })();
-      ok &= validateField(email, v => reEmail.test(v), 'Inserisci un’email valida.');
-      ok &= (function(){
-        const n = parseInt(age.value, 10);
-        return validateField(age, () => !isNaN(n) && n >= 18 && n <= 120, 'Età tra 18 e 120.');
-      })();
-      ok &= validateField(city, v => v.length >= 2, 'Inserisci la città.');
-
-      // Facoltativi (verdi se compilati bene)
-      if (job) validateField(job, v => v.length >= 2, '', true);
-      if (message) validateField(message, v => v.length >= 5, '', true);
-
-      if (!privacy.checked) {
-        privacy.classList.add('is-invalid');
-        privacy.classList.remove('is-valid');
-        ok &= false;
-      }
-
-      if (!form.checkValidity()) ok = false;
+      rules.forEach((rule, el) => { if (el) ok = validateField(el, rule) && ok; });
+      if (privacy && !privacy.checked) { setInvalid(privacy, 'Devi accettare l’informativa privacy.'); ok = false; }
       form.classList.add('was-validated');
+      if (!ok) { e.preventDefault(); e.stopPropagation(); (form.querySelector('.is-invalid') || name)?.focus(); }
+    });
 
-      if (!ok) {
-        e.preventDefault();
-        e.stopPropagation();
-        const firstInvalid = form.querySelector('.is-invalid, :invalid');
-        if (firstInvalid) firstInvalid.focus();
-      }
-    }, false);
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('form.needs-validation[action$="send_message"]').forEach(wireUpForm);
+    form.closest('.modal')?.addEventListener('show.bs.modal', () => {
+      form.classList.remove('was-validated');
+      form.querySelectorAll('.is-valid, .is-invalid').forEach(setNeutral);
+    });
   });
 
-})();
-</script>
+  // ======================================================================
+  // 2) MODALE "CREA / MODIFICA PROFILO"
+  // ======================================================================
+  const profileForm = document.querySelector('#site-modal-profile form');
+  if (profileForm) {
+    const first_name = profileForm.querySelector('[name="first_name"]');
+    const gender     = profileForm.querySelector('[name="gender"]');
+    const bio        = profileForm.querySelector('[name="bio"]');
+    const birth_year = profileForm.querySelector('[name="birth_year"]');
+    const city       = profileForm.querySelector('[name="city"]');
+    const occupation = profileForm.querySelector('[name="occupation"]');
+    const last_name  = profileForm.querySelector('[name="last_name"]');
+    const eyes_color = profileForm.querySelector('[name="eyes_color"]');
+    const hair_color = profileForm.querySelector('[name="hair_color"]');
+    const marital    = profileForm.querySelector('[name="marital_status"]');
+    const weight_kg  = profileForm.querySelector('[name="weight_kg"]');
+    const height_m   = profileForm.querySelector('[name="height_m"]');
 
+    const rulesP = new Map([
+      [first_name,{ required:true,  test:v => String(v).trim().length >= 2, msg:'Inserisci almeno 2 caratteri.' }],
+      [gender,    { required:true,  test:v => String(v).trim() !== '',      msg:'Seleziona il genere.' }],
+      [bio,       { required:true,  test:v => String(v).trim().length >= 10,msg:'Inserisci almeno 10 caratteri.' }],
+      [birth_year,{
+  required:false,
+  test:v => {
+    if (String(v).trim()==='') return true;   // vuoto → neutro
+    if (!/^\d{4}$/.test(v)) return false;     // deve avere 4 cifre
+    const n = Number(v);
+    return n >= 1900 && n <= 2100;           // deve stare nel range
+  },
+  msg:'Inserisci un anno tra 1900 e 2100.'
+}],
+      [city,      { required:false, test:v => String(v).trim().length >= 2, msg:'Almeno 2 caratteri (oppure lascia vuoto).' }],
+      [occupation,{ required:false, test:v => String(v).trim().length >= 2, msg:'Almeno 2 caratteri (oppure lascia vuoto).' }],
+      [last_name, { required:false, test:v => String(v).trim().length >= 2, msg:'Almeno 2 caratteri (oppure lascia vuoto).' }],
+      [eyes_color,{ required:false, test:v => String(v).trim() !== '',      msg:'Seleziona un valore (oppure lascia vuoto).' }],
+      [hair_color,{ required:false, test:v => String(v).trim() !== '',      msg:'Seleziona un valore (oppure lascia vuoto).' }],
+      [marital,   { required:false, test:v => String(v).trim() !== '',      msg:'Seleziona un valore (oppure lascia vuoto).' }],
+      [weight_kg, { required:false, test:v => {
+        if (String(v).trim()==='') return true;
+        const n = Number(v); return Number.isInteger(n) && n>=30 && n<=300;
+      }, msg:'Peso non valido (30–300 kg).'}],
+      [height_m,  { required:false, test:v => {
+        if (v === null || String(v).trim()==='') return true;
+        const n = toFloat(v); return !Number.isNaN(n) && n>=1.00 && n<=2.50;
+      }, normalize:s => String(s ?? '').trim().replace(',', '.'), msg:'Altezza non valida (1.00–2.50 m).'}],
+    ]);
+
+    rulesP.forEach((rule, el) => attachValidation(el, rule));
+
+    profileForm.addEventListener('submit', (e) => {
+      let ok = true;
+      rulesP.forEach((rule, el) => { if (el) ok = validateField(el, rule) && ok; });
+      if (height_m && height_m.value) height_m.value = height_m.value.replace(',', '.');
+      profileForm.classList.add('was-validated');
+      if (!ok) { e.preventDefault(); e.stopPropagation(); (profileForm.querySelector('.is-invalid') || first_name)?.focus(); }
+    });
+
+    document.getElementById('site-modal-profile')?.addEventListener('show.bs.modal', () => {
+      profileForm.classList.remove('was-validated');
+      profileForm.querySelectorAll('.is-valid, .is-invalid').forEach(setNeutral);
+    });
+  }
+});
+</script>
 
 {% endblock %}
