@@ -10,6 +10,9 @@ import smtplib
 from functools import wraps
 from types import SimpleNamespace
 from email.message import EmailMessage
+import re
+import html as ihtml
+
 
 from flask import (
     Flask, render_template, request, redirect, url_for, session, flash
@@ -498,18 +501,18 @@ Messaggio:
     # corpo in HTML con etichette in grassetto
     html_body = f"""
     <html>
-      <body style="font-family: Arial, sans-serif; line-height:1.5;">
+    <body style="font-family: Arial, sans-serif; line-height:1.5;">
         <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
 
         <p><b>Nome:</b> {sender_name}</p>
-        <p><b>Email:</b> {sender_email}</p>
-        <p><b>Cellulare:</b> {sender_phone}</p>
+        <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
+        <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
         <p><b>Lavoro:</b> {sender_job}</p>
         <p><b>Età:</b> {sender_age}</p>
         <p><b>Città:</b> {sender_city}</p>
 
         <p><b>Messaggio:</b><br>{sender_msg}</p>
-      </body>
+    </body>
     </html>
     """
 
