@@ -161,9 +161,13 @@ def esci():
 
 
 @app.route("/area-riservata")
-@require_auth
 def area_riservata():
-    return redirect(url_for("annunci"))
+    if session.get("is_authenticated"):
+        flash("Sei già autenticato.", "info")
+        return redirect(url_for("annunci"))
+    else:
+        flash("Devi inserire il codice per accedere.", "warning")
+        return redirect(url_for("accedi"))
 
 # =============================================================================
 # ANNUNCI (EX POSTS)
