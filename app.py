@@ -166,7 +166,6 @@ def area_riservata():
         flash("Sei già autenticato.", "info")
         return redirect(url_for("annunci"))
     else:
-        flash("Devi inserire il codice per accedere.", "warning")
         return redirect(url_for("accedi"))
 
 # =============================================================================
