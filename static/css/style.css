@@ -284,6 +284,18 @@ html, body {
 .modal-profile .modal-header { border-bottom: 0; }
 .modal-profile .modal-footer { border-top: 0; }
 
+/* Cookie banner bottom */
+.cookie-banner{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 1080; /* sopra al resto, sotto ai modal (1050->modal; 1080 ok) */
+  backdrop-filter: saturate(1.2) blur(2px);
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.cookie-banner .btn{
+  border-radius: .5rem;
+}
 
 /* ==========================================================================
    8) PAGINA CHI SIAMO

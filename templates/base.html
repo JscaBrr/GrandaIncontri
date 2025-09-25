@@ -165,6 +165,91 @@
     </div>
   </footer>
 
+  <!-- ─────────────────────────────────────────────────────────────
+     COOKIE BANNER (bottom) + MODALE POLICY
+     ───────────────────────────────────────────────────────────── -->
+  <div id="cookie-banner" class="cookie-banner shadow-lg" role="region" aria-label="Informativa cookie" hidden>
+    <div class="container d-flex flex-column flex-md-row align-items-center gap-2 py-3">
+      <div class="text-white-50 small flex-grow-1">
+        Proseguendo la navigazione o chiudendo la finestra presti il tuo consenso all’utilizzo di cookie.
+        <button type="button" class="btn btn-link btn-sm text-decoration-underline text-white-50 p-0 align-baseline" id="open-cookie-policy">
+          Cookie policy
+        </button>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-light btn-sm" id="cookie-reject">Rifiuta</button>
+        <button type="button" class="btn btn-primary btn-sm" id="cookie-accept">Prosegui la navigazione</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cookie Policy -->
+  <div class="modal fade" id="cookiePolicyModal" tabindex="-1" aria-labelledby="cookiePolicyLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cookiePolicyLabel">Cookie Policy di www.grandaincontri.it</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          <p>Questo documento contiene informazioni in merito alle tecnologie che consentono a questa Applicazione di raggiungere gli scopi descritti di seguito. Tali tecnologie permettono al Titolare di raccogliere e salvare informazioni (per esempio tramite l’utilizzo di Cookie) o di utilizzare risorse (per esempio eseguendo uno script) sul dispositivo dell’Utente quando quest’ultimo interagisce con questa Applicazione.</p>
+          <p>Per semplicità, in questo documento tali tecnologie sono sinteticamente definite “Strumenti di Tracciamento”, salvo vi sia ragione di differenziare.
+          Per esempio, sebbene i Cookie possano essere usati in browser sia web sia mobili, sarebbe fuori luogo parlare di Cookie nel contesto di applicazioni per dispositivi mobili, dal momento che si tratta di Strumenti di Tracciamento che richiedono la presenza di un browser. Per questo motivo, all’interno di questo documento il termine Cookie è utilizzato solo per indicare in modo specifico quel particolare tipo di Strumento di Tracciamento.</p>
+          <p>Alcune delle finalità per le quali vengono impiegati Strumenti di Tracciamento potrebbero, inoltre richiedere il consenso dell’Utente. Se viene prestato il consenso, esso può essere revocato liberamente in qualsiasi momento seguendo le istruzioni contenute in questo documento.</p>
+          <p>Questa Applicazione utilizza Strumenti di Tracciamento gestiti direttamente dal Titolare (comunemente detti Strumenti di Tracciamento “di prima parte”) e Strumenti di Tracciamento che abilitano servizi forniti da terzi (comunemente detti Strumenti di Tracciamento “di terza parte”). Se non diversamente specificato all’interno di questo documento, tali terzi hanno accesso ai rispettivi Strumenti di Tracciamento.
+          Durata e scadenza dei Cookie e degli altri Strumenti di Tracciamento simili possono variare a seconda di quanto impostato dal Titolare o da ciascun fornitore terzo. Alcuni di essi scadono al termine della sessione di navigazione dell’Utente.
+          In aggiunta a quanto specificato nella descrizione di ciascuna delle categorie di seguito riportate, gli Utenti possono ottenere informazioni più dettagliate ed aggiornate sulla durata, così come qualsiasi altra informazione rilevante - quale la presenza di altri Strumenti di Tracciamento - nelle privacy policy dei rispettivi fornitori terzi (tramite i link messi a disposizione) o contattando il Titolare.</p>
+
+          <h6 class="mt-4">Come questa Applicazione utilizza gli Strumenti di Tracciamento</h6>
+          <p class="mb-1 fw-semibold">Necessari</p>
+          <p>Questa Applicazione utilizza Cookie comunemente detti “tecnici” o altri Strumenti di Tracciamento analoghi per svolgere attività strettamente necessarie a garantire il funzionamento o la fornitura del Servizio.</p>
+          <p class="mb-1 fw-semibold">Misurazione</p>
+          <p>Questa Applicazione utilizza Strumenti di Tracciamento per misurare il traffico e analizzare il comportamento degli Utenti per migliorare il Servizio.</p>
+
+          <h6 class="mt-4">Strumenti di Tracciamento gestiti da terze parti</h6>
+          <p>Google Analytics (Universal Analytics) con IP anonimizzato (Google Inc.)</p>
+
+          <h6 class="mt-4">Come gestire le preferenze e prestare o revocare il consenso su questa Applicazione</h6>
+          <p>Qualora l’utilizzo dei Tracker sia basato sul consenso, l’Utente può fornire o revocare tale consenso impostando o aggiornando le proprie preferenze tramite il relativo pannello delle scelte in materia di privacy disponibile su questa Applicazione.</p>
+          <p>Per quanto riguarda Strumenti di Tracciamento di terza parte, gli Utenti possono gestire le proprie preferenze visitando il relativo link di opt out (qualora disponibile), utilizzando gli strumenti descritti nella privacy policy della terza parte o contattando quest'ultima direttamente.</p>
+
+          <h6 class="mt-4">Come controllare o eliminare Cookie e tecnologie simili tramite le impostazioni del tuo dispositivo</h6>
+          <ul>
+            <li>Vedere quali Cookie o altre tecnologie simili sono stati impostati sul dispositivo;</li>
+            <li>Bloccare Cookie o tecnologie simili;</li>
+            <li>Cancellare i Cookie o tecnologie simili dal browser.</li>
+          </ul>
+          <p>Le impostazioni del browser, tuttavia, non consentono un controllo granulare del consenso per categoria.</p>
+          <p>Link utili: <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Google Chrome</a> ·
+            <a href="https://support.mozilla.org/it/kb/Gestione%20dei%20cookie" target="_blank" rel="noopener">Mozilla Firefox</a> ·
+            <a href="https://support.apple.com/it-it/guide/safari/sfri11471/mac" target="_blank" rel="noopener">Apple Safari</a> ·
+            <a href="https://support.microsoft.com/it-it/topic/eliminare-e-gestire-i-cookie-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener">Microsoft Edge/Explorer</a> ·
+            <a href="https://support.brave.com/hc/en-us/articles/360022806212-How-do-I-use-Shields-while-browsing" target="_blank" rel="noopener">Brave</a> ·
+            <a href="https://help.opera.com/en/latest/web-preferences/#cookies" target="_blank" rel="noopener">Opera</a>
+          </p>
+
+          <h6 class="mt-4">Conseguenze legate al rifiuto dell'utilizzo di Strumenti di Tracciamento</h6>
+          <p>Gli Utenti sono liberi di decidere se permettere o meno l'utilizzo di Strumenti di Tracciamento. Tuttavia, si noti che gli Strumenti di Tracciamento consentono a questa Applicazione di fornire agli Utenti un'esperienza migliore e funzionalità avanzate. Pertanto, qualora l'Utente decida di bloccare l'utilizzo di Strumenti di Tracciamento, il Titolare potrebbe non essere in grado di fornire le relative funzionalità.</p>
+
+          <h6 class="mt-4">Titolare del Trattamento dei Dati</h6>
+          <p>Granda Incontri - GI di R.E.<br>
+          Partita IVA 04131820047 – Numero Rea CN-338046<br>
+          Email: <a href="mailto:staff@grandaincontri.com">staff@grandaincontri.com</a></p>
+
+          <h6 class="mt-4">Definizioni e riferimenti legali</h6>
+          <p><strong>Dati Personali (o Dati)</strong> – Qualunque informazione che, direttamente o indirettamente…</p>
+          <p><strong>Dati di Utilizzo</strong> – Informazioni raccolte automaticamente attraverso questa Applicazione…</p>
+          <p><strong>Utente</strong> – L’individuo che utilizza questa Applicazione…</p>
+          <p><strong>Cookie</strong> – Piccole porzioni di dati conservate nel browser dell’Utente.</p>
+          <p class="text-muted small mb-0">Ultima modifica: 24 settembre 2024</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- script Bootstrap e logica client -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -186,5 +271,42 @@
       });
     });
   </script>
+
+  <!-- script Cookie -->
+  <script>
+  (function () {
+    const LS_KEY = "gi_cookie_consent"; // 'accepted' | 'rejected'
+    const banner = document.getElementById("cookie-banner");
+    const btnAccept = document.getElementById("cookie-accept");
+    const btnReject = document.getElementById("cookie-reject");
+    const btnOpen = document.getElementById("open-cookie-policy");
+    const modalEl = document.getElementById("cookiePolicyModal");
+    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+
+    // mostra il banner se non c'è una scelta
+    try {
+      const choice = localStorage.getItem(LS_KEY);
+      if (!choice) banner.hidden = false;
+    } catch { banner.hidden = false; }
+
+    // azioni
+    btnAccept?.addEventListener("click", () => {
+      try { localStorage.setItem(LS_KEY, "accepted"); } catch {}
+      banner.hidden = true;
+      // qui potresti inizializzare tool non essenziali (es. Analytics) se necessario
+    });
+
+    btnReject?.addEventListener("click", () => {
+      try { localStorage.setItem(LS_KEY, "rejected"); } catch {}
+      banner.hidden = true;
+      // opzionale: spegnere script di tracking non essenziali
+    });
+
+    btnOpen?.addEventListener("click", () => {
+      modal?.show();
+    });
+  })();
+  </script>
+
 </body>
 </html>
