@@ -508,12 +508,6 @@ html, body {
 /* Titoli interni alla modale */
 #cookiePolicyModal .modal-title { font-weight: 700; font-size: 1.25rem; }
 #cookiePolicyModal .modal-header .btn-close { margin-left: auto; }
-#cookiePolicyModal .modal-body .policy-h {
-  font-weight: 700;
-  font-size: 1.25rem;
-  line-height: 1.25;
-  margin: 1.25rem 0 .5rem;
-}
 
 /* Durata cookie come tabella semplice */
 .policy-duration {
@@ -559,3 +553,54 @@ html, body {
   padding: .75rem 0;
   margin: 1rem 0;
 }
+
+/* ---- Gerarchia titoli nella modale ---- */
+#cookiePolicyModal .modal-title {
+  font-weight: 800;       /* unico titolo della pagina */
+  font-size: 1.125rem;    /* leggermente più piccolo per look "informativa" */
+}
+
+#cookiePolicyModal .modal-body{
+  font-size: .9375rem;    /* testo generale un po' più piccolo */
+  line-height: 1.55;
+}
+
+/* Sottotitolo (es. "Necessari", "Misurazione", "Come controllare...", "Conseguenze...",
+   "Indirizzo email del Titolare") */
+.policy-subtitle{
+  font-weight: 700;
+  font-size: 1.0rem;
+  line-height: 1.35;
+  margin: 1rem 0 .35rem;
+}
+
+/* Sottosottotitolo (es. "Strumenti di Tracciamento gestiti da terze parti") */
+.policy-subsubtitle{
+  font-weight: 600;
+  font-size: .975rem;
+  line-height: 1.35;
+  margin: .75rem 0 .35rem;
+}
+
+/* ---- Modale: lascia spazio al banner cookie quando è visibile ---- */
+/* Altezza stimata del banner (puoi regolarla se cambi il banner) */
+:root{ --cookie-banner-h: 84px; }
+
+/* Quando il banner è visibile, arretra la modale e limita l'altezza scrollabile */
+.cookie-banner-visible .modal-dialog{
+  margin-bottom: calc(var(--cookie-banner-h) + 8px);
+}
+.cookie-banner-visible .modal-dialog.modal-dialog-scrollable .modal-content{
+  max-height: calc(100vh - var(--cookie-banner-h) - 16px);
+}
+
+body.modal-open .cookie-banner{ z-index: 1039; } /* modal = 1050 */
+
+/* Optional: su schermi molto piccoli, un filo più compatto */
+@media (max-width: 575.98px){
+  :root{ --cookie-banner-h: 92px; }
+  #cookiePolicyModal .modal-title{ font-size: 1.05rem; }
+  .policy-subtitle{ font-size: .975rem; }
+  .policy-subsubtitle{ font-size: .95rem; }
+}
+
