@@ -478,7 +478,7 @@ html, body {
 .policy-accordion-header {
   width: 100%;
   display: grid;
-  grid-template-columns: 32px 1fr 24px;
+  grid-template-columns: 20px 1fr 24px; /* icona piccola come negli screenshot */
   align-items: center;
   gap: .75rem;
   padding: .75rem .75rem .75rem .5rem;
@@ -487,32 +487,30 @@ html, body {
   text-align: left;
   cursor: pointer;
 }
-.policy-accordion-header:hover {
-  background: var(--policy-hover);
-}
-.policy-accordion-icon {
-  display: grid;
-  place-items: center;
-}
-.policy-accordion-icon .bi {
-  font-size: 1rem;
-}
-.policy-accordion-title {
-  font-weight: 600;
-  line-height: 1.25;
-}
-.policy-accordion-caret .bi {
-  transition: transform .2s ease;
-  font-size: 1rem;
-}
-.policy-accordion-item .collapse.show + .policy-accordion-caret .bi { /* fallback old structure */
-  transform: rotate(180deg);
-}
+.policy-accordion-header:hover { background: var(--policy-hover); }
+
+.policy-accordion-icon { display: grid; place-items: center; }
+.policy-accordion-title { font-weight: 600; line-height: 1.25; }
+.policy-accordion-caret .bi { transition: transform .2s ease; font-size: 1rem; }
+
 .policy-accordion-body {
   padding: .75rem 1rem 1rem 1rem;
   border-top: 1px solid var(--policy-border);
   font-size: .95rem;
   color: #2b2f33;
+}
+
+/* Icone SVG (quadrato per GA, ribbon per Definizioni) */
+.icon-square rect   { fill: #adb5bd; }
+.icon-bookmark path { fill: #adb5bd; }
+
+/* Titoli interni alla modale: tutti uguali e ben visibili */
+#cookiePolicyModal .modal-title { font-weight: 700; font-size: 1.25rem; }
+#cookiePolicyModal .modal-body .policy-h{
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  margin: 1.25rem 0 .5rem;
 }
 
 /* durata cookie come tabella semplice */
@@ -522,29 +520,19 @@ html, body {
   padding: .5rem .75rem;
   background: #fafbfc;
 }
-.policy-duration-title {
-  font-weight: 600;
-  margin-bottom: .25rem;
-}
-.policy-duration-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+.policy-duration-title { font-weight: 600; margin-bottom: .25rem; }
+.policy-duration-list { list-style: none; margin: 0; padding: 0; }
 .policy-duration-list li {
   display: grid;
   grid-template-columns: 1fr auto;
   padding: .25rem 0;
   border-bottom: 1px solid rgba(0,0,0,.05);
 }
-.policy-duration-list li:last-child {
-  border-bottom: 0;
-}
+.policy-duration-list li:last-child { border-bottom: 0; }
 
-/* piccola “bandierina” a sinistra per il secondo blocco */
-.policy-accordion .badge-soft {
-  width: 12px;
-  height: 18px;
+/* piccola “bandierina” a sinistra per il secondo blocco (fallback) */
+.policy-accordion .badge-soft{
+  width: 12px; height: 18px;
   border-left: 3px solid #adb5bd;
   border-radius: 2px;
   background: linear-gradient(180deg,#f8f9fa,#e9ecef);
@@ -552,6 +540,12 @@ html, body {
   margin-left: 6px;
 }
 
+/* linea prima di "Riferimenti legali" */
+.policy-sep{
+  border: 0;
+  border-top: 1px solid #dfe3e7;
+  margin: .75rem 0 .5rem;
+}
+
+/* caret ruotata quando aperto (gestita dallo script) */
 .rotate-180 { transform: rotate(180deg); }
-
-
