@@ -478,7 +478,7 @@ html, body {
 .policy-accordion-header {
   width: 100%;
   display: grid;
-  grid-template-columns: 20px 1fr 24px; /* icona piccola come negli screenshot */
+  grid-template-columns: 22px 1fr 24px; /* spazio per icone Bootstrap */
   align-items: center;
   gap: .75rem;
   padding: .75rem .75rem .75rem .5rem;
@@ -488,8 +488,13 @@ html, body {
   cursor: pointer;
 }
 .policy-accordion-header:hover { background: var(--policy-hover); }
+.policy-accordion-header:focus {
+  outline: none;
+  box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+}
 
 .policy-accordion-icon { display: grid; place-items: center; }
+.policy-accordion-icon .bi { font-size: 1rem; color: #adb5bd; }
 .policy-accordion-title { font-weight: 600; line-height: 1.25; }
 .policy-accordion-caret .bi { transition: transform .2s ease; font-size: 1rem; }
 
@@ -500,20 +505,17 @@ html, body {
   color: #2b2f33;
 }
 
-/* Icone SVG (quadrato per GA, ribbon per Definizioni) */
-.icon-square rect   { fill: #adb5bd; }
-.icon-bookmark path { fill: #adb5bd; }
-
-/* Titoli interni alla modale: tutti uguali e ben visibili */
+/* Titoli interni alla modale */
 #cookiePolicyModal .modal-title { font-weight: 700; font-size: 1.25rem; }
-#cookiePolicyModal .modal-body .policy-h{
+#cookiePolicyModal .modal-header .btn-close { margin-left: auto; }
+#cookiePolicyModal .modal-body .policy-h {
   font-weight: 700;
   font-size: 1.25rem;
   line-height: 1.25;
   margin: 1.25rem 0 .5rem;
 }
 
-/* durata cookie come tabella semplice */
+/* Durata cookie come tabella semplice */
 .policy-duration {
   border: 1px dashed var(--policy-border);
   border-radius: .5rem;
@@ -530,8 +532,8 @@ html, body {
 }
 .policy-duration-list li:last-child { border-bottom: 0; }
 
-/* piccola “bandierina” a sinistra per il secondo blocco (fallback) */
-.policy-accordion .badge-soft{
+/* Piccola “bandierina” a sinistra per il secondo blocco (fallback) */
+.policy-accordion .badge-soft {
   width: 12px; height: 18px;
   border-left: 3px solid #adb5bd;
   border-radius: 2px;
@@ -540,12 +542,20 @@ html, body {
   margin-left: 6px;
 }
 
-/* linea prima di "Riferimenti legali" */
-.policy-sep{
+/* Linea prima di "Riferimenti legali" */
+.policy-sep {
   border: 0;
   border-top: 1px solid #dfe3e7;
   margin: .75rem 0 .5rem;
 }
 
-/* caret ruotata quando aperto (gestita dallo script) */
+/* Caret ruotata quando aperto (gestita dallo script) */
 .rotate-180 { transform: rotate(180deg); }
+
+/* Cornice tratteggiata per il blocco Definizioni */
+.policy-dashed{
+  border-top: 1px dashed #dfe3e7;
+  border-bottom: 1px dashed #dfe3e7;
+  padding: .75rem 0;
+  margin: 1rem 0;
+}
