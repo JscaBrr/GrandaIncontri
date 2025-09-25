@@ -506,7 +506,10 @@ html, body {
 }
 
 /* Titoli interni alla modale */
-#cookiePolicyModal .modal-title { font-weight: 700; font-size: 1.25rem; }
+#cookiePolicyModal .modal-title { 
+  font-weight: 800;           /* unico titolo della pagina */
+  font-size: 1.125rem;        /* come da screenshot: leggermente più piccolo */
+}
 #cookiePolicyModal .modal-header .btn-close { margin-left: auto; }
 
 /* Durata cookie come tabella semplice */
@@ -554,40 +557,33 @@ html, body {
   margin: 1rem 0;
 }
 
-/* ---- Gerarchia titoli nella modale ---- */
-#cookiePolicyModal .modal-title {
-  font-weight: 800;       /* unico titolo della pagina */
-  font-size: 1.125rem;    /* leggermente più piccolo per look "informativa" */
-}
-
+/* ---- Gerarchia titoli e testi nella modale ---- */
+/* Testo generale del corpo modale: più piccolo del titolo */
 #cookiePolicyModal .modal-body{
-  font-size: .9375rem;    /* testo generale un po' più piccolo */
+  font-size: .9375rem;    /* 15px se base=16 — “minore” del titolo */
   line-height: 1.55;
 }
 
-/* Sottotitolo (es. "Necessari", "Misurazione", "Come controllare...", "Conseguenze...",
-   "Indirizzo email del Titolare") */
+/* Subtitle: leggermente più grande del testo standard */
 .policy-subtitle{
   font-weight: 700;
-  font-size: 1.0rem;
+  font-size: 1rem;
   line-height: 1.35;
   margin: 1rem 0 .35rem;
 }
 
-/* Sottosottotitolo (es. "Strumenti di Tracciamento gestiti da terze parti") */
+/* Subsubtitle: stessa dimensione del testo standard, solo un filo evidenziato */
 .policy-subsubtitle{
   font-weight: 600;
-  font-size: .975rem;
+  font-size: .9375rem;    /* uguale al body */
   line-height: 1.35;
   margin: .75rem 0 .35rem;
   color: grey;
 }
 
 /* ---- Modale: lascia spazio al banner cookie quando è visibile ---- */
-/* Altezza stimata del banner (puoi regolarla se cambi il banner) */
 :root{ --cookie-banner-h: 84px; }
 
-/* Quando il banner è visibile, arretra la modale e limita l'altezza scrollabile */
 .cookie-banner-visible .modal-dialog{
   margin-bottom: calc(var(--cookie-banner-h) + 8px);
 }
@@ -602,6 +598,5 @@ body.modal-open .cookie-banner{ z-index: 1039; } /* modal = 1050 */
   :root{ --cookie-banner-h: 92px; }
   #cookiePolicyModal .modal-title{ font-size: 1.05rem; }
   .policy-subtitle{ font-size: .975rem; }
-  .policy-subsubtitle{ font-size: .95rem; }
+  .policy-subsubtitle{ font-size: .9375rem; } /* = body */
 }
-
