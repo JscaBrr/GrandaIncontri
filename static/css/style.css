@@ -459,3 +459,99 @@ html, body {
   .city-pill{ top: 8px; left: 8px; padding: .25rem .6rem; font-size: .85rem; }
 }
 
+
+/* ==========================================================================
+   Cookie Policy – Accordion stile Iubenda-like
+   ========================================================================== */
+.policy-accordion {
+  --policy-border: #dfe3e7;
+  --policy-bg: #fff;
+  --policy-hover: #f7f9fb;
+  --policy-radius: .5rem;
+  margin-bottom: .5rem;
+}
+.policy-accordion-item {
+  border: 1px solid var(--policy-border);
+  border-radius: var(--policy-radius);
+  background: var(--policy-bg);
+}
+.policy-accordion-header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 32px 1fr 24px;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem .75rem .75rem .5rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.policy-accordion-header:hover {
+  background: var(--policy-hover);
+}
+.policy-accordion-icon {
+  display: grid;
+  place-items: center;
+}
+.policy-accordion-icon .bi {
+  font-size: 1rem;
+}
+.policy-accordion-title {
+  font-weight: 600;
+  line-height: 1.25;
+}
+.policy-accordion-caret .bi {
+  transition: transform .2s ease;
+  font-size: 1rem;
+}
+.policy-accordion-item .collapse.show + .policy-accordion-caret .bi { /* fallback old structure */
+  transform: rotate(180deg);
+}
+.policy-accordion-body {
+  padding: .75rem 1rem 1rem 1rem;
+  border-top: 1px solid var(--policy-border);
+  font-size: .95rem;
+  color: #2b2f33;
+}
+
+/* durata cookie come tabella semplice */
+.policy-duration {
+  border: 1px dashed var(--policy-border);
+  border-radius: .5rem;
+  padding: .5rem .75rem;
+  background: #fafbfc;
+}
+.policy-duration-title {
+  font-weight: 600;
+  margin-bottom: .25rem;
+}
+.policy-duration-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.policy-duration-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: .25rem 0;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+}
+.policy-duration-list li:last-child {
+  border-bottom: 0;
+}
+
+/* piccola “bandierina” a sinistra per il secondo blocco */
+.policy-accordion .badge-soft {
+  width: 12px;
+  height: 18px;
+  border-left: 3px solid #adb5bd;
+  border-radius: 2px;
+  background: linear-gradient(180deg,#f8f9fa,#e9ecef);
+  display: inline-block;
+  margin-left: 6px;
+}
+
+.rotate-180 { transform: rotate(180deg); }
+
+

@@ -192,6 +192,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
         </div>
         <div class="modal-body">
+
           <p>Questo documento contiene informazioni in merito alle tecnologie che consentono a questa Applicazione di raggiungere gli scopi descritti di seguito. Tali tecnologie permettono al Titolare di raccogliere e salvare informazioni (per esempio tramite l’utilizzo di Cookie) o di utilizzare risorse (per esempio eseguendo uno script) sul dispositivo dell’Utente quando quest’ultimo interagisce con questa Applicazione.</p>
           <p>Per semplicità, in questo documento tali tecnologie sono sinteticamente definite “Strumenti di Tracciamento”, salvo vi sia ragione di differenziare.
           Per esempio, sebbene i Cookie possano essere usati in browser sia web sia mobili, sarebbe fuori luogo parlare di Cookie nel contesto di applicazioni per dispositivi mobili, dal momento che si tratta di Strumenti di Tracciamento che richiedono la presenza di un browser. Per questo motivo, all’interno di questo documento il termine Cookie è utilizzato solo per indicare in modo specifico quel particolare tipo di Strumento di Tracciamento.</p>
@@ -200,20 +201,61 @@
           Durata e scadenza dei Cookie e degli altri Strumenti di Tracciamento simili possono variare a seconda di quanto impostato dal Titolare o da ciascun fornitore terzo. Alcuni di essi scadono al termine della sessione di navigazione dell’Utente.
           In aggiunta a quanto specificato nella descrizione di ciascuna delle categorie di seguito riportate, gli Utenti possono ottenere informazioni più dettagliate ed aggiornate sulla durata, così come qualsiasi altra informazione rilevante - quale la presenza di altri Strumenti di Tracciamento - nelle privacy policy dei rispettivi fornitori terzi (tramite i link messi a disposizione) o contattando il Titolare.</p>
 
-          <h6 class="mt-4">Come questa Applicazione utilizza gli Strumenti di Tracciamento</h6>
-          <p class="mb-1 fw-semibold">Necessari</p>
+          <h6 class="mt-4 fw-bold">Come questa Applicazione utilizza gli Strumenti di Tracciamento</h6>
+          <p class="mb-1 fw-bold">Necessari</p>
           <p>Questa Applicazione utilizza Cookie comunemente detti “tecnici” o altri Strumenti di Tracciamento analoghi per svolgere attività strettamente necessarie a garantire il funzionamento o la fornitura del Servizio.</p>
-          <p class="mb-1 fw-semibold">Misurazione</p>
+          <p class="mb-1 fw-bold">Misurazione</p>
           <p>Questa Applicazione utilizza Strumenti di Tracciamento per misurare il traffico e analizzare il comportamento degli Utenti per migliorare il Servizio.</p>
 
-          <h6 class="mt-4">Strumenti di Tracciamento gestiti da terze parti</h6>
-          <p>Google Analytics (Universal Analytics) con IP anonimizzato (Google Inc.)</p>
+          <h6 class="mt-4 fw-bold">Strumenti di Tracciamento gestiti da terze parti</h6>
 
-          <h6 class="mt-4">Come gestire le preferenze e prestare o revocare il consenso su questa Applicazione</h6>
+          <!-- ACCORDION: Google Analytics -->
+          <div class="policy-accordion" id="policyAccordion">
+            <div class="policy-accordion-item">
+              <button class="policy-accordion-header" type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#gaItem"
+                      aria-expanded="false"
+                      aria-controls="gaItem">
+                <span class="policy-accordion-icon">
+                  <i class="bi bi-square-fill"></i>
+                </span>
+                <span class="policy-accordion-title">
+                  Google Analytics (Universal Analytics) con IP anonimizzato (Google Inc.)
+                </span>
+                <span class="policy-accordion-caret">
+                  <i class="bi bi-chevron-down"></i>
+                </span>
+              </button>
+              <div id="gaItem" class="collapse" data-bs-parent="#policyAccordion">
+                <div class="policy-accordion-body">
+                  <p>Google Analytics (Universal Analytics) è un servizio di analisi web fornito da Google LLC oppure da Google Ireland Limited, a seconda di come il Titolare gestisce il trattamento dei Dati, (“Google”). Google utilizza i Dati Personali raccolti allo scopo di tracciare ed esaminare l’utilizzo di questa Applicazione, compilare report e condividerli con gli altri servizi sviluppati da Google.</p>
+                  <p>Google potrebbe utilizzare i Dati Personali per contestualizzare e personalizzare gli annunci del proprio network pubblicitario.</p>
+                  <p>Questa integrazione di Google Analytics rende anonimo il tuo indirizzo IP. L'anonimizzazione funziona abbreviando entro i confini degli stati membri dell’Unione Europea o in altri Paesi aderenti all'accordo sullo Spazio Economico Europeo l'indirizzo IP degli Utenti. Solo in casi eccezionali, l'indirizzo IP sarà inviato ai server di Google ed abbreviato all'interno degli Stati Uniti. Per una comprensione dell'utilizzo dei dati da parte di Google, si prega di consultare le norme per i partner di Google.</p>
+
+                  <p class="mb-1"><strong>Dati Personali trattati:</strong> Dati di utilizzo e Strumenti di Tracciamento.</p>
+                  <p class="mb-1"><strong>Luogo del trattamento:</strong> USA – <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> – <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Opt Out</a>.</p>
+
+                  <div class="policy-duration mt-3">
+                    <div class="policy-duration-title">Durata degli Strumenti di Tracciamento</div>
+                    <ul class="policy-duration-list">
+                      <li><span>AMP_TOKEN</span><span>1 ora</span></li>
+                      <li><span>_ga</span><span>2 anni</span></li>
+                      <li><span>_gac*</span><span>3 mesi</span></li>
+                      <li><span>_gat</span><span>1 minuto</span></li>
+                      <li><span>_gid</span><span>1 giorno</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="mt-4 fw-bold">Come gestire le preferenze e prestare o revocare il consenso su questa Applicazione</h6>
           <p>Qualora l’utilizzo dei Tracker sia basato sul consenso, l’Utente può fornire o revocare tale consenso impostando o aggiornando le proprie preferenze tramite il relativo pannello delle scelte in materia di privacy disponibile su questa Applicazione.</p>
           <p>Per quanto riguarda Strumenti di Tracciamento di terza parte, gli Utenti possono gestire le proprie preferenze visitando il relativo link di opt out (qualora disponibile), utilizzando gli strumenti descritti nella privacy policy della terza parte o contattando quest'ultima direttamente.</p>
 
-          <h6 class="mt-4">Come controllare o eliminare Cookie e tecnologie simili tramite le impostazioni del tuo dispositivo</h6>
+          <h6 class="mt-4 fw-bold">Come controllare o eliminare Cookie e tecnologie simili tramite le impostazioni del tuo dispositivo</h6>
           <ul>
             <li>Vedere quali Cookie o altre tecnologie simili sono stati impostati sul dispositivo;</li>
             <li>Bloccare Cookie o tecnologie simili;</li>
@@ -228,21 +270,74 @@
             <a href="https://help.opera.com/en/latest/web-preferences/#cookies" target="_blank" rel="noopener">Opera</a>
           </p>
 
-          <h6 class="mt-4">Conseguenze legate al rifiuto dell'utilizzo di Strumenti di Tracciamento</h6>
+          <h6 class="mt-4 fw-bold">Conseguenze legate al rifiuto dell'utilizzo di Strumenti di Tracciamento</h6>
           <p>Gli Utenti sono liberi di decidere se permettere o meno l'utilizzo di Strumenti di Tracciamento. Tuttavia, si noti che gli Strumenti di Tracciamento consentono a questa Applicazione di fornire agli Utenti un'esperienza migliore e funzionalità avanzate. Pertanto, qualora l'Utente decida di bloccare l'utilizzo di Strumenti di Tracciamento, il Titolare potrebbe non essere in grado di fornire le relative funzionalità.</p>
 
-          <h6 class="mt-4">Titolare del Trattamento dei Dati</h6>
+          <!-- ACCORDION: Definizioni e riferimenti legali -->
+          <div class="policy-accordion mt-4" id="definitionsAccordion">
+            <div class="policy-accordion-item">
+              <button class="policy-accordion-header" type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#definitionsItem"
+                      aria-expanded="false"
+                      aria-controls="definitionsItem">
+                <span class="policy-accordion-icon badge-soft"></span>
+                <span class="policy-accordion-title">Definizioni e riferimenti legali</span>
+                <span class="policy-accordion-caret">
+                  <i class="bi bi-chevron-down"></i>
+                </span>
+              </button>
+              <div id="definitionsItem" class="collapse" data-bs-parent="#definitionsAccordion">
+                <div class="policy-accordion-body">
+                  <p><strong>Dati Personali (o Dati)</strong><br>
+                  Costituisce dato personale qualunque informazione che, direttamente o indirettamente, anche in collegamento con qualsiasi altra informazione, ivi compreso un numero di identificazione personale, renda identificata o identificabile una persona fisica.</p>
+
+                  <p><strong>Dati di Utilizzo</strong><br>
+                  Sono le informazioni raccolte automaticamente attraverso questa Applicazione (anche da applicazioni di parti terze integrate in questa Applicazione), tra cui: gli indirizzi IP o i nomi a dominio dei computer utilizzati dall’Utente che si connette con questa Applicazione, gli indirizzi in notazione URI (Uniform Resource Identifier), l’orario della richiesta, il metodo utilizzato nell’inoltrare la richiesta al server, la dimensione del file ottenuto in risposta, il codice numerico indicante lo stato della risposta dal server (buon fine, errore, ecc.) il paese di provenienza, le caratteristiche del browser e del sistema operativo utilizzati dal visitatore, le varie connotazioni temporali della visita (ad esempio il tempo di permanenza su ciascuna pagina) e i dettagli relativi all’itinerario seguito all’interno dell’Applicazione, con particolare riferimento alla sequenza delle pagine consultate, ai parametri relativi al sistema operativo e all’ambiente informatico dell’Utente.</p>
+
+                  <p><strong>Utente</strong><br>
+                  L'individuo che utilizza questa Applicazione che, salvo ove diversamente specificato, coincide con l'Interessato.</p>
+
+                  <p><strong>Interessato</strong><br>
+                  La persona fisica cui si riferiscono i Dati Personali.</p>
+
+                  <p><strong>Responsabile del Trattamento (o Responsabile)</strong><br>
+                  La persona fisica, giuridica, la pubblica amministrazione e qualsiasi altro ente che tratta dati personali per conto del Titolare, secondo quanto esposto nella presente privacy policy.</p>
+
+                  <p><strong>Titolare del Trattamento (o Titolare)</strong><br>
+                  La persona fisica o giuridica, l'autorità pubblica, il servizio o altro organismo che, singolarmente o insieme ad altri, determina le finalità e i mezzi del trattamento di dati personali e gli strumenti adottati, ivi comprese le misure di sicurezza relative al funzionamento ed alla fruizione di questa Applicazione. Il Titolare del Trattamento, salvo quanto diversamente specificato, è il titolare di questa Applicazione.</p>
+
+                  <p><strong>Questa Applicazione</strong><br>
+                  Lo strumento hardware o software mediante il quale sono raccolti e trattati i Dati Personali degli Utenti.</p>
+
+                  <p><strong>Servizio</strong><br>
+                  Il Servizio fornito da questa Applicazione così come definito nei relativi termini (se presenti) su questo sito/applicazione.</p>
+
+                  <p><strong>Unione Europea (o UE)</strong><br>
+                  Salvo ove diversamente specificato, ogni riferimento all’Unione Europea contenuto in questo documento si intende esteso a tutti gli attuali stati membri dell’Unione Europea e dello Spazio Economico Europeo.</p>
+
+                  <p><strong>Cookie</strong><br>
+                  I Cookie sono Strumenti di Tracciamento che consistono in piccole porzioni di dati conservate all'interno del browser dell’Utente.</p>
+
+                  <p><strong>Strumento di Tracciamento</strong><br>
+                  Per Strumento di Tracciamento s’intende qualsiasi tecnologia - es. Cookie, identificativi univoci, web beacons, script integrati, e-tag e fingerprinting - che consenta di tracciare gli Utenti, per esempio raccogliendo o salvando informazioni sul dispositivo dell’Utente.</p>
+
+                  <hr class="policy-sep">
+                  <p><strong>Riferimenti legali</strong><br>
+                  Ove non diversamente specificato, questa informativa privacy riguarda esclusivamente questa Applicazione.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h6 class="mt-4 fw-bold">Titolare del Trattamento dei Dati</h6>
           <p>Granda Incontri - GI di R.E.<br>
           Partita IVA 04131820047 – Numero Rea CN-338046<br>
           Email: <a href="mailto:staff@grandaincontri.com">staff@grandaincontri.com</a></p>
 
-          <h6 class="mt-4">Definizioni e riferimenti legali</h6>
-          <p><strong>Dati Personali (o Dati)</strong> – Qualunque informazione che, direttamente o indirettamente…</p>
-          <p><strong>Dati di Utilizzo</strong> – Informazioni raccolte automaticamente attraverso questa Applicazione…</p>
-          <p><strong>Utente</strong> – L’individuo che utilizza questa Applicazione…</p>
-          <p><strong>Cookie</strong> – Piccole porzioni di dati conservate nel browser dell’Utente.</p>
           <p class="text-muted small mb-0">Ultima modifica: 24 settembre 2024</p>
         </div>
+
         <div class="modal-footer">
           <button class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
         </div>
