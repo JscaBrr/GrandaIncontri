@@ -478,7 +478,7 @@ html, body {
 .policy-accordion-header {
   width: 100%;
   display: grid;
-  grid-template-columns: 22px 1fr 24px; /* spazio per icone Bootstrap */
+  grid-template-columns: 22px 1fr 24px;
   align-items: center;
   gap: .75rem;
   padding: .75rem .75rem .75rem .5rem;
@@ -492,7 +492,6 @@ html, body {
   outline: none;
   box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
 }
-
 .policy-accordion-icon { display: grid; place-items: center; }
 .policy-accordion-icon .bi { font-size: 1rem; color: #adb5bd; }
 .policy-accordion-title { font-weight: 600; line-height: 1.25; }
@@ -501,55 +500,65 @@ html, body {
 .policy-accordion-body {
   padding: .75rem 1rem 1rem 1rem;
   border-top: 1px solid var(--policy-border);
-  font-size: 1rem;          /* = body */
+  font-size: .875rem;      /* testo accordion piccolo (14px) */
   color: #2b2f33;
 }
 
-/* Titolo modale – più grande nello screenshot */
-#cookiePolicyModal .modal-title { 
+/* Titolo modale: resta più grande */
+#cookiePolicyModal .modal-title{
   font-weight: 800;
-  font-size: 1.25rem;       /* ~20px */
+  font-size: 1.25rem;      /* ~20px */
 }
-#cookiePolicyModal .modal-header .btn-close { margin-left: auto; }
+#cookiePolicyModal .modal-header .btn-close{ margin-left: auto; }
 
-/* Durata cookie come tabella semplice */
-.policy-duration {
+/* Corpo modale: TUTTO PIÙ PICCOLO */
+#cookiePolicyModal .modal-body{
+  font-size: .875rem;      /* 14px */
+  line-height: 1.6;
+}
+
+/* Subtitle: leggermente > body, ma comunque piccolo */
+.policy-subtitle{
+  font-weight: 700;
+  font-size: .95rem;       /* ~15.2px */
+  line-height: 1.35;
+  margin: 1rem 0 .35rem;
+}
+
+/* Subsubtitle: stessa dimensione del body */
+.policy-subsubtitle{
+  font-weight: 600;
+  font-size: .875rem;      /* 14px */
+  line-height: 1.35;
+  margin: .75rem 0 .35rem;
+  color: grey;
+}
+
+/* Durata cookie (box) */
+.policy-duration{
   border: 1px dashed var(--policy-border);
   border-radius: .5rem;
   padding: .5rem .75rem;
   background: #fafbfc;
+  font-size: .875rem;
 }
-.policy-duration-title { font-weight: 600; margin-bottom: .25rem; }
-.policy-duration-list { list-style: none; margin: 0; padding: 0; }
-.policy-duration-list li {
+.policy-duration-title{ font-weight: 600; margin-bottom: .25rem; }
+.policy-duration-list{ list-style: none; margin: 0; padding: 0; }
+.policy-duration-list li{
   display: grid;
   grid-template-columns: 1fr auto;
   padding: .25rem 0;
   border-bottom: 1px solid rgba(0,0,0,.05);
 }
-.policy-duration-list li:last-child { border-bottom: 0; }
+.policy-duration-list li:last-child{ border-bottom: 0; }
 
-/* Piccola “bandierina” */
-.policy-accordion .badge-soft {
-  width: 12px; height: 18px;
-  border-left: 3px solid #adb5bd;
-  border-radius: 2px;
-  background: linear-gradient(180deg,#f8f9fa,#e9ecef);
-  display: inline-block;
-  margin-left: 6px;
-}
-
-/* Linea prima di "Riferimenti legali" */
-.policy-sep {
+/* Dettagli stile */
+.policy-sep{
   border: 0;
   border-top: 1px solid #dfe3e7;
   margin: .75rem 0 .5rem;
 }
-
-/* Caret ruotata quando aperto (gestita dallo script) */
-.rotate-180 { transform: rotate(180deg); }
-
-/* Cornice tratteggiata per il blocco Definizioni */
+.rotate-180{ transform: rotate(180deg); }
 .policy-dashed{
   border-top: 1px dashed #dfe3e7;
   border-bottom: 1px dashed #dfe3e7;
@@ -557,52 +566,20 @@ html, body {
   margin: 1rem 0;
 }
 
-/* ---- Gerarchia titoli e testi nella modale ---- */
-/* Testo generale del corpo modale: dimensione standard (come screenshot) */
-#cookiePolicyModal .modal-body{
-  font-size: 1rem;          /* 16px */
-  line-height: 1.6;
-}
-
-/* Subtitle: leggermente più grande del body */
-.policy-subtitle{
-  font-weight: 700;
-  font-size: 1.125rem;      /* ~18px */
-  line-height: 1.35;
-  margin: 1rem 0 .35rem;
-}
-
-/* Subsubtitle: uguale al body, solo più marcato */
-.policy-subsubtitle{
-  font-weight: 600;
-  font-size: 1rem;          /* = body */
-  line-height: 1.35;
-  margin: .75rem 0 .35rem;
-  color: grey;
-}
-
-/* Forza grassetto sul nome organizzazione */
-#cookiePolicyModal .org-name,
-#cookiePolicyModal .org-name strong{
-  font-weight: 700 !important;
-}
-
-/* ---- Modale: lascia spazio al banner cookie quando è visibile ---- */
+/* Spazio rispetto al banner */
 :root{ --cookie-banner-h: 84px; }
-
 .cookie-banner-visible .modal-dialog{
   margin-bottom: calc(var(--cookie-banner-h) + 8px);
 }
 .cookie-banner-visible .modal-dialog.modal-dialog-scrollable .modal-content{
   max-height: calc(100vh - var(--cookie-banner-h) - 16px);
 }
-
 body.modal-open .cookie-banner{ z-index: 1039; } /* modal = 1050 */
 
-/* Compattezza su schermi piccoli */
+/* Mobile: resta piccolo e leggibile */
 @media (max-width: 575.98px){
   :root{ --cookie-banner-h: 92px; }
   #cookiePolicyModal .modal-title{ font-size: 1.2rem; }
-  .policy-subtitle{ font-size: 1.0625rem; }
-  .policy-subsubtitle{ font-size: 1rem; }
+  .policy-subtitle{ font-size: .9375rem; }   /* 15px */
+  .policy-subsubtitle{ font-size: .875rem; } /* 14px */
 }
