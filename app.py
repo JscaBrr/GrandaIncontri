@@ -454,173 +454,115 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
 # =============================================================================
 # ROUTE: INVIO MESSAGGIO
 # =============================================================================
-import logging, traceback, sys, uuid, re
-from flask import request, redirect, url_for, flash
-
 @app.route("/send_message", methods=["POST"])
 def send_message():
-    log = app.logger  # usa il logger di Flask/Gunicorn
-    rid = str(uuid.uuid4())[:8]  # request id breve per correlare i log
-    log.info("[send_message %s] IN", rid)
+    form = request.form
 
-    try:
-        form = request.form
+    profile_id   = form.get("profile_id", "")
+    profile_name = form.get("profile_name", "")
 
-        # --- lettura campi grezzi ---
-        profile_id   = (form.get("profile_id") or "").strip()
-        pid = int(profile_id) if profile_id.isdigit() else None
-        profile_name = form.get("profile_name", "")  # può essere ""
-        sender_name   = (form.get("sender_name") or "").strip()
-        sender_phone  = (form.get("sender_phone") or "").strip()
-        sender_email  = (form.get("sender_email") or "").strip()
-        sender_job    = (form.get("sender_job") or "").strip() or "—"
-        age_raw       = (form.get("sender_age") or "").strip()
-        sender_city   = (form.get("sender_city") or "").strip()
-        sender_msg    = (form.get("sender_message") or "").strip() or "—"
-        agree_privacy = form.get("agree_privacy")
+    sender_name   = (form.get("sender_name") or "").strip()
+    sender_phone  = (form.get("sender_phone") or "").strip()
+    sender_email  = (form.get("sender_email") or "").strip()
+    sender_job    = (form.get("sender_job") or "").strip() or "—"
+    sender_age    = (form.get("sender_age") or "").strip()
+    sender_city   = (form.get("sender_city") or "").strip()
+    sender_msg    = (form.get("sender_message") or "").strip() or "—"
+    agree_privacy = form.get("agree_privacy")
 
-        log.info("[send_message %s] raw: pid=%r, profile_name=%r, name=%r, phone=%r, email=%r, job=%r, age_raw=%r, city=%r, msg_len=%d, privacy=%r, referrer=%r",
-                 rid, pid, profile_name, sender_name,
-                 sender_phone[:3] + "…",  # offusca un po'
-                 sender_email, sender_job, age_raw, sender_city, len(sender_msg), bool(agree_privacy),
-                 request.referrer)
+    errors = []
+    if not sender_name: errors.append("Il nome è obbligatorio.")
+    if not sender_phone: errors.append("Il cellulare è obbligatorio.")
+    if not sender_email or "@" not in sender_email: errors.append("Email non valida.")
+    if not sender_age: errors.append("L'età è obbligatoria.")
+    if not sender_city: errors.append("La città è obbligatoria.")
+    if not agree_privacy: errors.append("Devi accettare l'informativa privacy.")
 
-        # --- validazioni base ---
-        errors = []
-        if not sender_name:
-            errors.append("Il nome è obbligatorio.")
-        if not sender_phone:
-            errors.append("Il cellulare è obbligatorio.")
-        if not sender_email or "@" not in sender_email:
-            errors.append("Email non valida.")
-        if not age_raw:
-            errors.append("L'età è obbligatoria.")
-        if not sender_city:
-            errors.append("La città è obbligatoria.")
-        if not agree_privacy:
-            errors.append("Devi accettare l'informativa privacy.")
+    if errors:
+        for e in errors:
+            flash(e, "danger")
+        return redirect(request.referrer or url_for("annunci"))
 
-        # --- normalizza & valida età: solo cifre, range 18..120 ---
-        age_digits = re.sub(r"\D+", "", age_raw)
-        age_num = int(age_digits) if age_digits else None
-        if age_num is None or not (18 <= age_num <= 120):
-            errors.append("L'età deve essere un numero tra 18 e 120.")
-        log.info("[send_message %s] age_parsed=%r from %r", rid, age_num, age_raw)
+    subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
 
-        # --- verifica FK profile_id: se non esiste, non lo usiamo ---
-        if pid is not None:
-            try:
-                prof = profiles_dao.get_profile_by_id(pid)
-                exists = bool(prof)
-                log.info("[send_message %s] profile_id=%s exists=%s", rid, pid, exists)
-                if not exists:
-                    pid = None
-            except Exception as e:
-                log.error("[send_message %s] get_profile_by_id(%s) failed: %s", rid, pid, e)
-                pid = None
-
-        if errors:
-            log.warning("[send_message %s] validation_errors=%s", rid, errors)
-            for e in errors:
-                flash(e, "danger")
-            return redirect(request.referrer or url_for("annunci"))
-
-        subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
-
-        # --- corpo email (testo + HTML) ---
-        text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
+    # corpo in plain text (fallback)
+    text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
 
 Dettagli mittente:
 - Nome: {sender_name}
 - Email: {sender_email}
 - Cellulare: {sender_phone}
 - Lavoro: {sender_job}
-- Età: {age_num}
+- Età: {sender_age}
 - Città: {sender_city}
 
 Messaggio:
 {sender_msg}
 """
-        html_body = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; line-height:1.5;">
-            <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
 
-            <p><b>Nome:</b> {sender_name}</p>
-            <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
-            <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
-            <p><b>Lavoro:</b> {sender_job}</p>
-            <p><b>Età:</b> {age_num}</p>
-            <p><b>Città:</b> {sender_city}</p>
+    # corpo in HTML con etichette in grassetto
+    html_body = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; line-height:1.5;">
+        <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
 
-            <p><b>Messaggio:</b><br>{sender_msg}</p>
-        </body>
-        </html>
-        """
+        <p><b>Nome:</b> {sender_name}</p>
+        <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
+        <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
+        <p><b>Lavoro:</b> {sender_job}</p>
+        <p><b>Età:</b> {sender_age}</p>
+        <p><b>Città:</b> {sender_city}</p>
 
-        # --- invio email ---
-        try:
-            log.info("[send_message %s] SMTP connecting host=%s port=%s user=%s",
-                     rid, SMTP_HOST, SMTP_PORT, (SMTP_USERNAME or "(no-auth)"))
-            msg = EmailMessage()
-            msg["Subject"] = subject
-            msg["From"] = MAIL_FROM
-            msg["To"] = MAIL_TO
-            msg["Reply-To"] = sender_email
+        <p><b>Messaggio:</b><br>{sender_msg}</p>
+    </body>
+    </html>
+    """
 
-            msg.set_content(text_body)
-            msg.add_alternative(html_body, subtype="html")
+    # invio email con testo + html
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = MAIL_FROM
+        msg["To"] = MAIL_TO
+        msg["Reply-To"] = sender_email
 
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-                server.ehlo()
-                if SMTP_PORT in (587, 25):
-                    server.starttls()
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(msg)
-            ok, err = True, None
-            log.info("[send_message %s] SMTP OK", rid)
-        except Exception as e:
-            ok, err = False, str(e)
-            log.error("[send_message %s] SMTP ERROR: %s", rid, err)
+        msg.set_content(text_body)
+        msg.add_alternative(html_body, subtype="html")
 
-        # --- salvataggio DB ---
-        try:
-            log.info("[send_message %s] DB insert_message start pid=%r age=%r", rid, pid, age_num)
-            profiles_dao.insert_message(
-                sender_name=sender_name,
-                sender_phone=sender_phone,
-                sender_email=sender_email,
-                sender_job=sender_job,
-                sender_age=age_num,        # sempre int
-                sender_city=sender_city,
-                sender_message=sender_msg,
-                profile_id=pid             # solo se esistente
-            )
-            saved_ok = True
-            log.info("[send_message %s] DB insert_message OK", rid)
-        except Exception as e:
-            saved_ok = False
-            log.error("[send_message %s] DB insert_message ERROR: %s", rid, e)
-            log.error("[send_message %s] TRACE:\n%s", rid, traceback.format_exc())
-            flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
-
-        # --- feedback utente ---
-        if ok and saved_ok:
-            flash("Messaggio inviato e salvato con successo!", "success")
-        elif ok and not saved_ok:
-            flash("Messaggio inviato via email, ma non salvato nel database.", "warning")
-        elif not ok and saved_ok:
-            flash(f"Email non inviata (salvata nel database): {err}", "warning")
-        else:
-            flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
-
-        log.info("[send_message %s] OUT ok=%s saved_ok=%s", rid, ok, saved_ok)
-        return redirect(request.referrer or url_for("annunci"))
-
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.ehlo()
+            if SMTP_PORT in (587, 25):
+                server.starttls()
+            if SMTP_USERNAME and SMTP_PASSWORD:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+        ok, err = True, None
     except Exception as e:
-        # paracadute finale: nessun 500 silenzioso
-        log.error("[send_message %s] UNCAUGHT ERROR: %s", rid, e)
-        log.error("[send_message %s] TRACE:\n%s", rid, traceback.format_exc())
-        flash(f"Errore inatteso durante l'invio del messaggio: {e}", "danger")
-        return redirect(request.referrer or url_for("annunci"))
+        ok, err = False, str(e)
+
+    try:
+        profiles_dao.insert_message(
+            sender_name=sender_name,
+            sender_phone=sender_phone,
+            sender_email=sender_email,
+            sender_job=sender_job,
+            sender_age=int(sender_age) if sender_age.isdigit() else None,
+            sender_city=sender_city,
+            sender_message=sender_msg,
+            profile_id=profile_id
+        )
+        saved_ok = True
+    except Exception as e:
+        saved_ok = False
+        flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
+
+    if ok and saved_ok:
+        flash("Messaggio inviato e salvato con successo!", "success")
+    elif ok and not saved_ok:
+        flash("Messaggio inviato via email, ma non salvato nel database.", "warning")
+    elif not ok and saved_ok:
+        flash(f"Email non inviata (salvata nel database): {err}", "warning")
+    else:
+        flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
+
+    return redirect(request.referrer or url_for("annunci"))
