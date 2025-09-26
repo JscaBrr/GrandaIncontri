@@ -359,6 +359,7 @@ def create_or_update_profile():
     occupation = (form.get("occupation") or "").strip()
     eyes_color = (form.get("eyes_color") or "").strip()
     hair_color = (form.get("hair_color") or "").strip()
+    zodiac_sign = (form.get("zodiac_sign") or "").strip() or None  # <--- nuovo
 
     # Altezza in metri → DB in cm
     def _to_float(v):
@@ -398,7 +399,7 @@ def create_or_update_profile():
     if errors:
         for e in errors:
             flash(e, "danger")
-        # Solo in caso di errore su un update, mantieni l’ID
+        # Solo in caso di errore su un update, mantieni l’ID per riaprire il modale
         if profile_id:
             return redirect(url_for("annunci", profile_id=profile_id))
         else:
@@ -410,7 +411,7 @@ def create_or_update_profile():
             int(profile_id),
             first_name, last_name, gender, birth_year, city, occupation,
             eyes_color, hair_color, height_cm, smoker, bio, is_active,
-            weight_kg, marital_status
+            weight_kg, marital_status, zodiac_sign  # <--- passa il nuovo campo in coda
         )
         flash("Profilo aggiornato con successo!", "success")
     else:
@@ -418,7 +419,8 @@ def create_or_update_profile():
             first_name, last_name, gender, birth_year, city, occupation,
             eyes_color, hair_color, height_cm, smoker, bio, is_active,
             weight_kg, marital_status,
-            created_at=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            created_at=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+            zodiac_sign=zodiac_sign  # <--- passa il nuovo campo
         )
         flash("Profilo creato e pubblicato!", "success")
 

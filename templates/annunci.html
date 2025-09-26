@@ -90,14 +90,16 @@
           <div class="col-md-4">
             <label class="form-label small text-primary fw-bold">Colore occhi</label>
             {% set sel_eyes = request.args.get('eyes_color','')|lower %}
-            <select class="form-select" name="eyes_color">
-              <option value=""          {% if sel_eyes == '' %}selected{% endif %}>Qualsiasi</option>
-              <option value="castani"   {% if sel_eyes == 'castani' %}selected{% endif %}>Castani</option>
-              <option value="azzurri"   {% if sel_eyes == 'azzurri' %}selected{% endif %}>Azzurri</option>
-              <option value="verdi"     {% if sel_eyes == 'verdi' %}selected{% endif %}>Verdi</option>
-              <option value="grigi"     {% if sel_eyes == 'grigi' %}selected{% endif %}>Grigi</option>
-              <option value="nocciola"  {% if sel_eyes == 'nocciola' %}selected{% endif %}>Nocciola</option>
-            </select>
+           <select class="form-select" name="eyes_color">
+            <option value=""          {% if sel_eyes == '' %}selected{% endif %}>Qualsiasi</option>
+            <option value="castani"   {% if sel_eyes == 'castani' %}selected{% endif %}>Castani</option>
+            <option value="azzurri"   {% if sel_eyes == 'azzurri' %}selected{% endif %}>Azzurri</option>
+            <option value="blu"       {% if sel_eyes == 'blu' %}selected{% endif %}>Blu</option>
+            <option value="verdi"     {% if sel_eyes == 'verdi' %}selected{% endif %}>Verdi</option>
+            <option value="marroni/verdi" {% if sel_eyes == 'marroni/verdi' %}selected{% endif %}>Marroni/Verdi</option>
+            <option value="grigi"     {% if sel_eyes == 'grigi' %}selected{% endif %}>Grigi</option>
+            <option value="nocciola"  {% if sel_eyes == 'nocciola' %}selected{% endif %}>Nocciola</option>
+          </select>
           </div>
 
           {% if current_user.is_authenticated %}
@@ -137,7 +139,7 @@
 
       <div class="d-flex flex-wrap gap-2
                   justify-content-center justify-content-md-end w-100 w-md-auto">
-        {% if current_user.is_authenticated and request.args.get('filter_id') %}
+        {% if current_user.is_authenticated and request.args.get('id') %}
           <span class="badge bg-info text-dark">ID: #{{ request.args.get('id') }}</span>
         {% endif %}
         {% if request.args.get('gender') %}
@@ -205,6 +207,10 @@
 
           {# Stato civile #}
           {% if stato_it %}{% set _ = parts.append(stato_it) %}{% endif %}
+
+          {# Segno zodiacale #}
+          {% if p['zodiac_sign'] %}{% set _ = parts.append(p['zodiac_sign']) %}{% endif %}
+
 
           {# Fumo con genere #}
           {% if fuma is not none %}
@@ -429,14 +435,16 @@
               <div class="col-md-4">
                 <label class="form-label small">Colore occhi</label>
                 {% set esel = (profile_to_edit.eyes_color if profile_to_edit else '') %}
-                <select class="form-select" name="eyes_color">
-                  <option value="" {% if not esel %}selected{% endif %}>Seleziona...</option>
-                  <option value="Azzurri"  {% if esel == 'Azzurri' %}selected{% endif %}>Azzurri</option>
-                  <option value="Verdi"    {% if esel == 'Verdi' %}selected{% endif %}>Verdi</option>
-                  <option value="Marroni"  {% if esel == 'Marroni' %}selected{% endif %}>Marroni</option>
-                  <option value="Neri"     {% if esel == 'Neri' %}selected{% endif %}>Neri</option>
-                  <option value="Grigi"    {% if esel == 'Grigi' %}selected{% endif %}>Grigi</option>
-                </select>
+               <select class="form-select" name="eyes_color">
+                <option value="" {% if not esel %}selected{% endif %}>Seleziona...</option>
+                <option value="Azzurri"  {% if esel == 'Azzurri' %}selected{% endif %}>Azzurri</option>
+                <option value="Blu"      {% if esel == 'Blu' %}selected{% endif %}>Blu</option> <!-- nuovo -->
+                <option value="Verdi"    {% if esel == 'Verdi' %}selected{% endif %}>Verdi</option>
+                <option value="Marroni"  {% if esel == 'Marroni' %}selected{% endif %}>Marroni</option>
+                <option value="Marroni/Verdi" {% if esel == 'Marroni/Verdi' %}selected{% endif %}>Marroni/Verdi</option> <!-- nuovo -->
+                <option value="Neri"     {% if esel == 'Neri' %}selected{% endif %}>Neri</option>
+                <option value="Grigi"    {% if esel == 'Grigi' %}selected{% endif %}>Grigi</option>
+              </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label small">Colore capelli</label>
@@ -477,6 +485,17 @@
                   <option value="Separato/a"    {% if msel == 'Separato/a' %}selected{% endif %}>Separato/a</option>
                   <option value="Divorziato/a"  {% if msel == 'Divorziato/a' %}selected{% endif %}>Divorziato/a</option>
                   <option value="Vedovo/a"      {% if msel == 'Vedovo/a' %}selected{% endif %}>Vedovo/a</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small">Segno zodiacale</label>
+                {% set zsel = (profile_to_edit.zodiac_sign if profile_to_edit else '') %}
+                <select class="form-select" name="zodiac_sign">
+                  <option value="" {% if not zsel %}selected{% endif %}>Seleziona...</option>
+                  {% for z in ['Ariete','Toro','Gemelli','Cancro','Leone','Vergine','Bilancia','Scorpione','Sagittario','Capricorno','Acquario','Pesci'] %}
+                    <option value="{{ z }}" {% if zsel == z %}selected{% endif %}>{{ z }}</option>
+                  {% endfor %}
                 </select>
               </div>
             </div>
@@ -534,7 +553,7 @@
           .forEach(n => { const el = form.querySelector(`[name="${n}"]`); if (el) el.value = ''; });
 
         // select -> prima opzione (placeholder)
-        ['gender','eyes_color','hair_color','marital_status']
+        ['gender','eyes_color','hair_color','marital_status', 'zodiac_sign']
           .forEach(n => { const el = form.querySelector(`[name="${n}"]`); if (el) el.selectedIndex = 0; });
 
         // checkbox -> off
