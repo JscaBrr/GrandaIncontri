@@ -478,48 +478,58 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
 # =============================================================================
 # ROUTE: INVIO MESSAGGIO
 # =============================================================================
+from traceback import format_exc
+
 @app.route("/send_message", methods=["POST"])
 def send_message():
-    form = request.form
+    try:
+        form = request.form
 
-    profile_id   = form.get("profile_id", "")
-    pid = int(profile_id) if str(profile_id).isdigit() else None
-    profile_name = form.get("profile_name", "")
+        profile_id   = form.get("profile_id", "")
+        pid = int(profile_id) if str(profile_id).isdigit() else None
+        profile_name = form.get("profile_name", "")
 
-    sender_name   = (form.get("sender_name") or "").strip()
-    sender_phone  = (form.get("sender_phone") or "").strip()
-    sender_email  = (form.get("sender_email") or "").strip()
-    sender_job    = (form.get("sender_job") or "").strip() or "—"
-    sender_age    = (form.get("sender_age") or "").strip()
-    sender_city   = (form.get("sender_city") or "").strip()
-    sender_msg    = (form.get("sender_message") or "").strip() or "—"
-    agree_privacy = form.get("agree_privacy")
+        sender_name   = (form.get("sender_name") or "").strip()
+        sender_phone  = (form.get("sender_phone") or "").strip()
+        sender_email  = (form.get("sender_email") or "").strip()
+        sender_job    = (form.get("sender_job") or "").strip() or "—"
+        sender_age    = (form.get("sender_age") or "").strip()
+        sender_city   = (form.get("sender_city") or "").strip()
+        sender_msg    = (form.get("sender_message") or "").strip() or "—"
+        agree_privacy = form.get("agree_privacy")
 
-    errors = []
-    if not sender_name:
-        errors.append("Il nome è obbligatorio.")
-    if not sender_phone:
-        errors.append("Il cellulare è obbligatorio.")
-    if not sender_email or "@" not in sender_email:
-        errors.append("Email non valida.")
-    if not sender_age:
-        errors.append("L'età è obbligatoria.")
-    elif not sender_age.isdigit():
-        errors.append("L'età deve essere un numero.")
-    if not sender_city:
-        errors.append("La città è obbligatoria.")
-    if not agree_privacy:
-        errors.append("Devi accettare l'informativa privacy.")
+        errors = []
+        if not sender_name:
+            errors.append("Il nome è obbligatorio.")
+        if not sender_phone:
+            errors.append("Il cellulare è obbligatorio.")
+        if not sender_email or "@" not in sender_email:
+            errors.append("Email non valida.")
+        if not sender_age:
+            errors.append("L'età è obbligatoria.")
+        elif not sender_age.isdigit():
+            errors.append("L'età deve essere un numero.")
+        if not sender_city:
+            errors.append("La città è obbligatoria.")
+        if not agree_privacy:
+            errors.append("Devi accettare l'informativa privacy.")
 
-    if errors:
-        for e in errors:
-            flash(e, "danger")
-        return redirect(request.referrer or url_for("annunci"))
+        if errors:
+            for e in errors:
+                flash(e, "danger")
+            return redirect(request.referrer or url_for("annunci"))
 
-    subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
+        subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
 
-    # corpo in plain text (fallback)
-    text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
+        # ----- EMAIL -----
+        try:
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = MAIL_FROM
+            msg["To"] = MAIL_TO
+            msg["Reply-To"] = sender_email
+
+            text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
 
 Dettagli mittente:
 - Nome: {sender_name}
@@ -532,71 +542,66 @@ Dettagli mittente:
 Messaggio:
 {sender_msg}
 """
+            html_body = f"""
+<html>
+<body style="font-family: Arial, sans-serif; line-height:1.5;">
+  <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
+  <p><b>Nome:</b> {sender_name}</p>
+  <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
+  <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
+  <p><b>Lavoro:</b> {sender_job}</p>
+  <p><b>Età:</b> {sender_age}</p>
+  <p><b>Città:</b> {sender_city}</p>
+  <p><b>Messaggio:</b><br>{sender_msg}</p>
+</body>
+</html>
+"""
+            msg.set_content(text_body)
+            msg.add_alternative(html_body, subtype="html")
 
-    # corpo in HTML con etichette in grassetto
-    html_body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; line-height:1.5;">
-        <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                server.ehlo()
+                if SMTP_PORT in (587, 25):
+                    server.starttls()
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(msg)
+            ok, err = True, None
+        except Exception as e:
+            app.logger.exception("Errore invio email")
+            ok, err = False, str(e)
 
-        <p><b>Nome:</b> {sender_name}</p>
-        <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
-        <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
-        <p><b>Lavoro:</b> {sender_job}</p>
-        <p><b>Età:</b> {sender_age}</p>
-        <p><b>Città:</b> {sender_city}</p>
+        # ----- DB INSERT -----
+        try:
+            profiles_dao.insert_message(
+                sender_name=sender_name,
+                sender_phone=sender_phone,
+                sender_email=sender_email,
+                sender_job=sender_job,
+                sender_age=int(sender_age),     # a questo punto è numerico
+                sender_city=sender_city,
+                sender_message=sender_msg,
+                profile_id=pid
+            )
+            saved_ok = True
+        except Exception as e:
+            saved_ok = False
+            app.logger.exception("Errore salvataggio messaggio su DB")
+            flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
 
-        <p><b>Messaggio:</b><br>{sender_msg}</p>
-    </body>
-    </html>
-    """
+        if ok and saved_ok:
+            flash("Messaggio inviato e salvato con successo!", "success")
+        elif ok and not saved_ok:
+            flash("Messaggio inviato via email, ma non salvato nel database.", "warning")
+        elif not ok and saved_ok:
+            flash(f"Email non inviata (salvata nel database): {err}", "warning")
+        else:
+            flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
 
-    # invio email con testo + html
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = MAIL_FROM
-        msg["To"] = MAIL_TO
-        msg["Reply-To"] = sender_email
+        return redirect(request.referrer or url_for("annunci"))
 
-        msg.set_content(text_body)
-        msg.add_alternative(html_body, subtype="html")
-
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.ehlo()
-            if SMTP_PORT in (587, 25):
-                server.starttls()
-            if SMTP_USERNAME and SMTP_PASSWORD:
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
-        ok, err = True, None
-    except Exception as e:
-        ok, err = False, str(e)
-
-    try:
-        profiles_dao.insert_message(
-        sender_name=sender_name,
-        sender_phone=sender_phone,
-        sender_email=sender_email,
-        sender_job=sender_job,
-        sender_age=int(sender_age) if sender_age.isdigit() else None,
-        sender_city=sender_city,
-        sender_message=sender_msg,
-        profile_id=pid
-    )
-        saved_ok = True
-    except Exception as e:
-        saved_ok = False
-        flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
-
-    if ok and saved_ok:
-        flash("Messaggio inviato e salvato con successo!", "success")
-    elif ok and not saved_ok:
-        flash("Messaggio inviato via email, ma non salvato nel database.", "warning")
-    elif not ok and saved_ok:
-        flash(f"Email non inviata (salvata nel database): {err}", "warning")
-    else:
-        flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
-
-    return redirect(request.referrer or url_for("annunci"))
-
+    except Exception:
+        # Cattura QUALSIASI altra eccezione imprevista per evitare 500 silenziosi
+        app.logger.error("Eccezione non gestita in /send_message:\n%s", format_exc())
+        flash("Si è verificato un errore interno durante l'invio del messaggio.", "danger")
+        return redirect(url_for("annunci"))
