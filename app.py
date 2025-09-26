@@ -541,6 +541,8 @@ Messaggio:
         ok, err = False, str(e)
 
     try:
+        pid = int(profile_id) if str(profile_id).isdigit() else None
+
         profiles_dao.insert_message(
             sender_name=sender_name,
             sender_phone=sender_phone,
@@ -549,8 +551,9 @@ Messaggio:
             sender_age=int(sender_age) if sender_age.isdigit() else None,
             sender_city=sender_city,
             sender_message=sender_msg,
-            profile_id=profile_id
+            profile_id=pid
         )
+
         saved_ok = True
     except Exception as e:
         saved_ok = False
