@@ -180,6 +180,14 @@ def update_profile(
         cur.execute(sql, params)
         conn.commit()
 
+def delete_profile(profile_id: int) -> None:
+    with closing(_conn()) as conn, closing(conn.cursor()) as cur:
+        # stacca i messaggi dal profilo, così non blocca la FK
+        cur.execute("UPDATE messages SET profile_id = NULL WHERE profile_id = %s", (profile_id,))
+        # poi elimina il profilo
+        cur.execute("DELETE FROM profiles WHERE id = %s", (profile_id,))
+        conn.commit()
+
 # ─────────────────────────────────────────────────────────────────────────────
 # INSERT: MESSAGES
 # ─────────────────────────────────────────────────────────────────────────────
