@@ -6,12 +6,16 @@
 import os
 import datetime
 import random
-import smtplib
+#import smtplib
 from functools import wraps
 from types import SimpleNamespace
 from email.message import EmailMessage
 import re
 import html as ihtml
+# sostituisci l'uso di smtplib per l'invio
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email
+
 
 
 from flask import (
@@ -36,7 +40,8 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 MAIL_FROM = os.getenv("MAIL_FROM", SMTP_USERNAME or "no-reply@localhost")
-MAIL_TO = os.getenv("MAIL_TO", "barroerojessica@yahoo.com")
+MAIL_TO = os.getenv("MAIL_TO", "sito@grandaincontri.com")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
 # =============================================================================
 # SICUREZZA SEMPLICE (PASSCODE)
@@ -462,40 +467,32 @@ def send_email(subject: str,
                html_body: str | None = None,
                reply_to: str | None = None) -> tuple[bool, str | None]:
     """
-    Invia email:
-      - se SMTP_PORT == 465 usa SSL diretto
-      - altrimenti usa STARTTLS su 587/25
+    Invia email tramite SendGrid API.
+    Richiede:
+      - SENDGRID_API_KEY in env
+      - MAIL_FROM verificato su SendGrid (Single Sender o domain auth)
     """
     try:
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = MAIL_FROM
-        msg["To"] = MAIL_TO
+        if not SENDGRID_API_KEY:
+            return False, "SENDGRID_API_KEY mancante"
+
+        message = Mail(
+            from_email=MAIL_FROM,
+            to_emails=MAIL_TO,
+            subject=subject,
+            plain_text_content=text_body,
+            html_content=html_body or text_body.replace("\n", "<br>")
+        )
         if reply_to:
-            msg["Reply-To"] = reply_to
+            message.reply_to = Email(reply_to)
 
-        msg.set_content(text_body)
-        if html_body:
-            msg.add_alternative(html_body, subtype="html")
-
-        if SMTP_PORT == 465:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as server:
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(msg)
-        else:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as server:
-                server.ehlo()
-                if SMTP_PORT in (587, 25):
-                    server.starttls(context=ssl.create_default_context())
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(msg)
-
-        return True, None
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        resp = sg.send(message)
+        ok = 200 <= resp.status_code < 300
+        return (ok, None if ok else f"SendGrid status {resp.status_code}")
     except Exception as e:
         return False, str(e)
+
 
 # =============================================================================
 # ROUTE: INVIO MESSAGGIO
