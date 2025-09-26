@@ -458,6 +458,7 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
 def send_message():
     form = request.form
 
+    # --- lettura campi ---
     profile_id   = (form.get("profile_id") or "").strip()
     pid = int(profile_id) if profile_id.isdigit() else None
     profile_name = form.get("profile_name", "")
@@ -465,18 +466,41 @@ def send_message():
     sender_phone  = (form.get("sender_phone") or "").strip()
     sender_email  = (form.get("sender_email") or "").strip()
     sender_job    = (form.get("sender_job") or "").strip() or "—"
-    sender_age    = (form.get("sender_age") or "").strip()
+    age_raw       = (form.get("sender_age") or "").strip()
     sender_city   = (form.get("sender_city") or "").strip()
     sender_msg    = (form.get("sender_message") or "").strip() or "—"
     agree_privacy = form.get("agree_privacy")
 
+    # --- validazioni base ---
     errors = []
-    if not sender_name: errors.append("Il nome è obbligatorio.")
-    if not sender_phone: errors.append("Il cellulare è obbligatorio.")
-    if not sender_email or "@" not in sender_email: errors.append("Email non valida.")
-    if not sender_age: errors.append("L'età è obbligatoria.")
-    if not sender_city: errors.append("La città è obbligatoria.")
-    if not agree_privacy: errors.append("Devi accettare l'informativa privacy.")
+    if not sender_name:
+        errors.append("Il nome è obbligatorio.")
+    if not sender_phone:
+        errors.append("Il cellulare è obbligatorio.")
+    if not sender_email or "@" not in sender_email:
+        errors.append("Email non valida.")
+    if not age_raw:
+        errors.append("L'età è obbligatoria.")
+    if not sender_city:
+        errors.append("La città è obbligatoria.")
+    if not agree_privacy:
+        errors.append("Devi accettare l'informativa privacy.")
+
+    # --- normalizza & valida età: solo cifre, range 18..120 ---
+    age_digits = re.sub(r"\D+", "", age_raw)
+    age_num = int(age_digits) if age_digits else None
+    if age_num is None or not (18 <= age_num <= 120):
+        errors.append("L'età deve essere un numero tra 18 e 120.")
+
+    # --- verifica FK profile_id: se non esiste, non lo usiamo ---
+    if pid is not None:
+        try:
+            prof = profiles_dao.get_profile_by_id(pid)
+            if not prof:
+                pid = None
+        except Exception:
+            # per sicurezza: se la query al profilo fallisce, non passare la FK
+            pid = None
 
     if errors:
         for e in errors:
@@ -485,7 +509,7 @@ def send_message():
 
     subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
 
-    # corpo in plain text (fallback)
+    # --- corpo email (testo + HTML) ---
     text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
 
 Dettagli mittente:
@@ -493,14 +517,13 @@ Dettagli mittente:
 - Email: {sender_email}
 - Cellulare: {sender_phone}
 - Lavoro: {sender_job}
-- Età: {sender_age}
+- Età: {age_num}
 - Città: {sender_city}
 
 Messaggio:
 {sender_msg}
 """
 
-    # corpo in HTML con etichette in grassetto
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height:1.5;">
@@ -510,7 +533,7 @@ Messaggio:
         <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
         <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
         <p><b>Lavoro:</b> {sender_job}</p>
-        <p><b>Età:</b> {sender_age}</p>
+        <p><b>Età:</b> {age_num}</p>
         <p><b>Città:</b> {sender_city}</p>
 
         <p><b>Messaggio:</b><br>{sender_msg}</p>
@@ -518,7 +541,7 @@ Messaggio:
     </html>
     """
 
-    # invio email con testo + html
+    # --- invio email ---
     try:
         msg = EmailMessage()
         msg["Subject"] = subject
@@ -540,22 +563,24 @@ Messaggio:
     except Exception as e:
         ok, err = False, str(e)
 
+    # --- salvataggio DB ---
     try:
         profiles_dao.insert_message(
             sender_name=sender_name,
             sender_phone=sender_phone,
             sender_email=sender_email,
             sender_job=sender_job,
-            sender_age=int(sender_age) if sender_age.isdigit() else None,
+            sender_age=age_num,        # <-- sempre int, mai None
             sender_city=sender_city,
             sender_message=sender_msg,
-            profile_id=pid
+            profile_id=pid             # <-- solo se esistente
         )
         saved_ok = True
     except Exception as e:
         saved_ok = False
         flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
 
+    # --- feedback ---
     if ok and saved_ok:
         flash("Messaggio inviato e salvato con successo!", "success")
     elif ok and not saved_ok:
@@ -566,4 +591,3 @@ Messaggio:
         flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
 
     return redirect(request.referrer or url_for("annunci"))
-
