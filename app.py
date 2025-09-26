@@ -465,100 +465,101 @@ def send_message():
     sender_phone  = (form.get("sender_phone") or "").strip()
     sender_email  = (form.get("sender_email") or "").strip()
     sender_job    = (form.get("sender_job") or "").strip() or "—"
-    sender_age    = (form.get("sender_age") or "").strip()
+    sender_age_s  = (form.get("sender_age") or "").strip()
     sender_city   = (form.get("sender_city") or "").strip()
     sender_msg    = (form.get("sender_message") or "").strip() or "—"
     agree_privacy = form.get("agree_privacy")
 
+    # --- validazioni base + età numerica 18..120 ---
     errors = []
     if not sender_name: errors.append("Il nome è obbligatorio.")
     if not sender_phone: errors.append("Il cellulare è obbligatorio.")
     if not sender_email or "@" not in sender_email: errors.append("Email non valida.")
-    if not sender_age: errors.append("L'età è obbligatoria.")
     if not sender_city: errors.append("La città è obbligatoria.")
     if not agree_privacy: errors.append("Devi accettare l'informativa privacy.")
 
+    age_digits = re.sub(r"\D+", "", sender_age_s)
+    age_num = int(age_digits) if age_digits else None
+    if age_num is None or not (18 <= age_num <= 120):
+        errors.append("L'età deve essere un numero tra 18 e 120.")
+
     if errors:
-        for e in errors:
-            flash(e, "danger")
+        for e in errors: flash(e, "danger")
         return redirect(request.referrer or url_for("annunci"))
 
-    subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
+    pid = int(profile_id) if str(profile_id).isdigit() else None
 
-    # corpo in plain text (fallback)
-    text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
+    # --- 1) Salva SUBITO nel DB (veloce) ---
+    saved_ok = False
+    try:
+        profiles_dao.insert_message(
+            sender_name=sender_name,
+            sender_phone=sender_phone,
+            sender_email=sender_email,
+            sender_job=sender_job,
+            sender_age=age_num,            # <- sempre int, NOT NULL
+            sender_city=sender_city,
+            sender_message=sender_msg,
+            profile_id=pid
+        )
+        saved_ok = True
+    except Exception as e:
+        flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
+
+    # --- 2) Invia email (con timeout breve) ---
+    ok, err = False, None
+    # Fallback: consenti di DISABILITARE email da env se serve debug
+    if os.getenv("DISABLE_EMAIL", "0") in ("1", "true", "True"):
+        ok = True  # salta SMTP ma non bloccare il flusso
+    else:
+        subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
+        text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
 
 Dettagli mittente:
 - Nome: {sender_name}
 - Email: {sender_email}
 - Cellulare: {sender_phone}
 - Lavoro: {sender_job}
-- Età: {sender_age}
+- Età: {age_num}
 - Città: {sender_city}
 
 Messaggio:
 {sender_msg}
 """
+        html_body = f"""
+<html><body style="font-family: Arial, sans-serif; line-height:1.5;">
+  <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
+  <p><b>Nome:</b> {sender_name}</p>
+  <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
+  <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
+  <p><b>Lavoro:</b> {sender_job}</p>
+  <p><b>Età:</b> {age_num}</p>
+  <p><b>Città:</b> {sender_city}</p>
+  <p><b>Messaggio:</b><br>{sender_msg}</p>
+</body></html>"""
 
-    # corpo in HTML con etichette in grassetto
-    html_body = f"""
-    <html>
-    <body style="font-family: Arial, sans-serif; line-height:1.5;">
-        <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
+        try:
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = MAIL_FROM
+            msg["To"] = MAIL_TO
+            msg["Reply-To"] = sender_email
+            msg.set_content(text_body)
+            msg.add_alternative(html_body, subtype="html")
 
-        <p><b>Nome:</b> {sender_name}</p>
-        <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
-        <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
-        <p><b>Lavoro:</b> {sender_job}</p>
-        <p><b>Età:</b> {sender_age}</p>
-        <p><b>Città:</b> {sender_city}</p>
+            smtp_timeout = int(os.getenv("SMTP_TIMEOUT", "8"))  # timeout duro per evitare hang
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=smtp_timeout) as server:
+                server.ehlo()
+                if SMTP_PORT in (587, 25):
+                    server.starttls()
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(msg)
+            ok = True
+        except Exception as e:
+            ok, err = False, str(e)
 
-        <p><b>Messaggio:</b><br>{sender_msg}</p>
-    </body>
-    </html>
-    """
-
-    # invio email con testo + html
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = MAIL_FROM
-        msg["To"] = MAIL_TO
-        msg["Reply-To"] = sender_email
-
-        msg.set_content(text_body)
-        msg.add_alternative(html_body, subtype="html")
-
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.ehlo()
-            if SMTP_PORT in (587, 25):
-                server.starttls()
-            if SMTP_USERNAME and SMTP_PASSWORD:
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
-        ok, err = True, None
-    except Exception as e:
-        ok, err = False, str(e)
-
-    try:
-        pid = int(profile_id) if str(profile_id).isdigit() else None
-
-        profiles_dao.insert_message(
-            sender_name=sender_name,
-            sender_phone=sender_phone,
-            sender_email=sender_email,
-            sender_job=sender_job,
-            sender_age=int(sender_age) if sender_age.isdigit() else None,
-            sender_city=sender_city,
-            sender_message=sender_msg,
-            profile_id=pid
-        )
-
-        saved_ok = True
-    except Exception as e:
-        saved_ok = False
-        flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
-
+    # --- feedback utente ---
     if ok and saved_ok:
         flash("Messaggio inviato e salvato con successo!", "success")
     elif ok and not saved_ok:
@@ -569,4 +570,3 @@ Messaggio:
         flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
 
     return redirect(request.referrer or url_for("annunci"))
-
