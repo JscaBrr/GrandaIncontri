@@ -458,9 +458,7 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
 def send_message():
     form = request.form
 
-    # --- lettura campi ---
-    raw_pid      = (form.get("profile_id") or "").strip()
-    pid          = int(raw_pid) if raw_pid.isdigit() else None
+    profile_id   = form.get("profile_id", "")
     profile_name = form.get("profile_name", "")
 
     sender_name   = (form.get("sender_name") or "").strip()
@@ -472,7 +470,6 @@ def send_message():
     sender_msg    = (form.get("sender_message") or "").strip() or "—"
     agree_privacy = form.get("agree_privacy")
 
-    # --- validazioni base ---
     errors = []
     if not sender_name: errors.append("Il nome è obbligatorio.")
     if not sender_phone: errors.append("Il cellulare è obbligatorio.")
@@ -481,29 +478,14 @@ def send_message():
     if not sender_city: errors.append("La città è obbligatoria.")
     if not agree_privacy: errors.append("Devi accettare l'informativa privacy.")
 
-    # --- normalizza età: prendi solo cifre → int ---
-    age_digits = re.sub(r"\D+", "", sender_age or "")
-    age_num = int(age_digits) if age_digits else None
-    if age_num is None:
-        errors.append("L'età deve essere un numero valido.")
-
-    # --- verifica che il profile_id esista; altrimenti non passarlo ---
-    if pid is not None:
-        try:
-            prof = profiles_dao.get_profile_by_id(pid)
-            if not prof:
-                pid = None
-        except Exception:
-            pid = None
-
     if errors:
         for e in errors:
             flash(e, "danger")
         return redirect(request.referrer or url_for("annunci"))
 
-    subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {raw_pid})' if raw_pid else ''}"
+    subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
 
-    # --- email: testo + HTML ---
+    # corpo in plain text (fallback)
     text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
 
 Dettagli mittente:
@@ -511,69 +493,69 @@ Dettagli mittente:
 - Email: {sender_email}
 - Cellulare: {sender_phone}
 - Lavoro: {sender_job}
-- Età: {age_num}
+- Età: {sender_age}
 - Città: {sender_city}
 
 Messaggio:
 {sender_msg}
 """
+
+    # corpo in HTML con etichette in grassetto
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height:1.5;">
         <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
+
         <p><b>Nome:</b> {sender_name}</p>
         <p><b>Email:</b> <a href="mailto:{sender_email}">{sender_email}</a></p>
         <p><b>Cellulare:</b> <a href="tel:{sender_phone}">{sender_phone}</a></p>
         <p><b>Lavoro:</b> {sender_job}</p>
-        <p><b>Età:</b> {age_num}</p>
+        <p><b>Età:</b> {sender_age}</p>
         <p><b>Città:</b> {sender_city}</p>
+
         <p><b>Messaggio:</b><br>{sender_msg}</p>
     </body>
     </html>
     """
 
-    # --- invio email (best-effort: skippabile e con timeout) ---
-    ok, err = True, None
-    if DISABLE_SMTP:
-        pass  # email disabilitata via env
-    else:
-        try:
-            msg = EmailMessage()
-            msg["Subject"] = subject
-            msg["From"] = MAIL_FROM
-            msg["To"] = MAIL_TO
-            msg["Reply-To"] = sender_email
-            msg.set_content(text_body)
-            msg.add_alternative(html_body, subtype="html")
+    # invio email con testo + html
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = MAIL_FROM
+        msg["To"] = MAIL_TO
+        msg["Reply-To"] = sender_email
 
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as server:
-                server.ehlo()
-                if SMTP_PORT in (587, 25):
-                    server.starttls()
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(msg)
-        except Exception as e:
-            ok, err = False, str(e)
+        msg.set_content(text_body)
+        msg.add_alternative(html_body, subtype="html")
 
-    # --- salvataggio DB ---
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.ehlo()
+            if SMTP_PORT in (587, 25):
+                server.starttls()
+            if SMTP_USERNAME and SMTP_PASSWORD:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+        ok, err = True, None
+    except Exception as e:
+        ok, err = False, str(e)
+
     try:
         profiles_dao.insert_message(
             sender_name=sender_name,
             sender_phone=sender_phone,
             sender_email=sender_email,
             sender_job=sender_job,
-            sender_age=age_num,           # <-- int garantito
+            sender_age=int(sender_age) if sender_age.isdigit() else None,
             sender_city=sender_city,
             sender_message=sender_msg,
-            profile_id=pid                # <-- solo se esistente
+            profile_id=profile_id
         )
         saved_ok = True
     except Exception as e:
         saved_ok = False
         flash(f"Errore nel salvataggio del messaggio nel database: {e}", "danger")
 
-    # --- feedback ---
     if ok and saved_ok:
         flash("Messaggio inviato e salvato con successo!", "success")
     elif ok and not saved_ok:
@@ -584,3 +566,4 @@ Messaggio:
         flash(f"Errore nell'invio email e nel salvataggio: {err}", "danger")
 
     return redirect(request.referrer or url_for("annunci"))
+
