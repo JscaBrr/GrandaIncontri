@@ -119,6 +119,7 @@ def insert_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
+    zodiac_sign: Optional[str] = None, 
     created_at: Optional[str] = None,
 ) -> int:
     """
@@ -162,6 +163,7 @@ def update_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
+    zodiac_sign: Optional[str] = None, 
 ) -> None:
     sql = """
     UPDATE profiles SET
