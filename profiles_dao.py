@@ -48,7 +48,7 @@ class Profile(TypedDict, total=False):
     created_at: str        # "YYYY-MM-DD HH:MM:SS"
     weight_kg: int
     marital_status: str
-    zodiac_sign: str    
+    zodiac_sign: str
 
 class Message(TypedDict, total=False):
     id: int
@@ -119,8 +119,7 @@ def insert_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
-    zodiac_sign: Optional[str] = None,     # <-- NUOVO
-    created_at: Optional[str] = None,      # <-- resta ultimo in SQL
+    created_at: Optional[str] = None,
 ) -> int:
     """
     Crea un profilo e ritorna l'id creato.
@@ -128,18 +127,19 @@ def insert_profile(
     """
     created_at = created_at or _utc_now_str()
     sql = """
-        INSERT INTO profiles (
-          first_name, last_name, gender, birth_year, city, occupation,
-          eyes_color, hair_color, height_cm, smoker, bio, is_active,
-          weight_kg, marital_status, zodiac_sign, created_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id
+    INSERT INTO profiles (
+      first_name, last_name, gender, birth_year, city, occupation,
+      eyes_color, hair_color, height_cm, smoker, bio, is_active,
+      created_at, weight_kg, marital_status, zodiac_sign
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    RETURNING id
     """
     params: Tuple[Any, ...] = (
         first_name, last_name, gender, birth_year, city, occupation,
         eyes_color, hair_color, height_cm, smoker, bio, is_active,
-        weight_kg, marital_status, zodiac_sign, created_at
+        created_at, weight_kg, marital_status, zodiac_sign
     )
+
     with closing(_conn()) as conn, closing(conn.cursor()) as cur:
         cur.execute(sql, params)
         new_id = cur.fetchone()["id"]  # type: ignore[index]
@@ -162,30 +162,28 @@ def update_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
-    zodiac_sign: Optional[str] = None,   # <-- NUOVO
 ) -> None:
     sql = """
-        UPDATE profiles SET
-          first_name = %s, last_name = %s, gender = %s, birth_year = %s, city = %s, occupation = %s,
-          eyes_color = %s, hair_color = %s, height_cm = %s, smoker = %s, bio = %s, is_active = %s,
-          weight_kg = %s, marital_status = %s, zodiac_sign = %s
-        WHERE id = %s
+    UPDATE profiles SET
+      first_name = %s, last_name = %s, gender = %s, birth_year = %s, city = %s, occupation = %s,
+      eyes_color = %s, hair_color = %s, height_cm = %s, smoker = %s, bio = %s, is_active = %s,
+      weight_kg = %s, marital_status = %s, zodiac_sign = %s
+    WHERE id = %s
     """
     params: Tuple[Any, ...] = (
         first_name, last_name, gender, birth_year, city, occupation,
         eyes_color, hair_color, height_cm, smoker, bio, is_active,
         weight_kg, marital_status, zodiac_sign, profile_id
     )
+
     with closing(_conn()) as conn, closing(conn.cursor()) as cur:
         cur.execute(sql, params)
         conn.commit()
 
 def delete_profile(profile_id: int) -> None:
+    sql = "DELETE FROM profiles WHERE id = %s"
     with closing(_conn()) as conn, closing(conn.cursor()) as cur:
-        # stacca i messaggi dal profilo, così non blocca la FK
-        cur.execute("UPDATE messages SET profile_id = NULL WHERE profile_id = %s", (profile_id,))
-        # poi elimina il profilo
-        cur.execute("DELETE FROM profiles WHERE id = %s", (profile_id,))
+        cur.execute(sql, (profile_id,))
         conn.commit()
 
 # ─────────────────────────────────────────────────────────────────────────────
