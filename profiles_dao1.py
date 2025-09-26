@@ -1,11 +1,6 @@
-# filename: profiles_dao.py
-
+# filename: profiles_dao1.py
 # ─────────────────────────────────────────────────────────────────────────────
-# Data Access Object (DAO) per profiles e messages su SQLite.
-# - Connessioni sicure con context manager
-# - Tipi e docstring
-# - Utility per conversione Row → dict
-# - Timestamp in UTC ISO-like
+# DAO per SQLite con supporto a 'zodiac_sign' su profiles e profile_id su messages
 # ─────────────────────────────────────────────────────────────────────────────
 
 from __future__ import annotations
@@ -16,18 +11,11 @@ from contextlib import closing
 from datetime import datetime
 from typing import Any, Iterable, List, Optional, Sequence, Tuple, TypedDict
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CONFIGURAZIONE DI BASE
-# ─────────────────────────────────────────────────────────────────────────────
 DB_PATH = os.getenv("DATABASE_PATH", "db/GrandaIncontri.db")
 
 def _utc_now_str() -> str:
-    """Ritorna l'orario UTC in formato 'YYYY-MM-DD HH:MM:SS'."""
     return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TIPI
-# ─────────────────────────────────────────────────────────────────────────────
 class Profile(TypedDict, total=False):
     id: int
     first_name: str
@@ -39,12 +27,13 @@ class Profile(TypedDict, total=False):
     eyes_color: str
     hair_color: str
     height_cm: int
-    smoker: int            # 0/1
+    smoker: int
     bio: str
-    is_active: int         # 0/1
-    created_at: str        # "YYYY-MM-DD HH:MM:SS"
-    weight_kg: int         # opzionale
-    marital_status: str    # es. "Celibe/Nubile", "Sposato/a", ...
+    is_active: int
+    created_at: str
+    weight_kg: int
+    marital_status: str
+    zodiac_sign: str            # <<< aggiunto
 
 class Message(TypedDict, total=False):
     id: int
@@ -58,11 +47,7 @@ class Message(TypedDict, total=False):
     profile_id: Optional[int]
     created_at: str
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CONNESSIONE E UTILITY
-# ─────────────────────────────────────────────────────────────────────────────
 def _conn() -> sqlite3.Connection:
-    """Crea una connessione a SQLite con row_factory e FK ON."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     with closing(conn.cursor()) as cur:
@@ -75,13 +60,8 @@ def _rows_to_dicts(rows: Iterable[sqlite3.Row]) -> List[dict]:
 def _row_to_dict(row: Optional[sqlite3.Row]) -> Optional[dict]:
     return dict(row) if row is not None else None
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CRUD: PROFILES
-# ─────────────────────────────────────────────────────────────────────────────
+# ───────────── PROFILES ─────────────
 def get_all_profiles() -> List[Profile]:
-    """
-    Ritorna tutti i profili ordinati per created_at desc (NULL/'' in coda), poi id desc.
-    """
     sql = """
         SELECT *
         FROM profiles
@@ -115,25 +95,21 @@ def insert_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
+    zodiac_sign: Optional[str] = None,      # <<< aggiunto
     created_at: Optional[str] = None,
 ) -> int:
-    """
-    Crea un profilo e ritorna l'id creato.
-    - created_at: se None → now UTC.
-    - marital_status può essere testo in italiano (es. 'Sposato/a').
-    """
     created_at = created_at or _utc_now_str()
     sql = """
         INSERT INTO profiles (
           first_name, last_name, gender, birth_year, city, occupation,
           eyes_color, hair_color, height_cm, smoker, bio, is_active,
-          created_at, weight_kg, marital_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          created_at, weight_kg, marital_status, zodiac_sign
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     params: Tuple[Any, ...] = (
         first_name, last_name, gender, birth_year, city, occupation,
         eyes_color, hair_color, height_cm, smoker, bio, is_active,
-        created_at, weight_kg, marital_status
+        created_at, weight_kg, marital_status, zodiac_sign
     )
     with closing(_conn()) as conn, closing(conn.cursor()) as cur:
         try:
@@ -160,21 +136,19 @@ def update_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
+    zodiac_sign: Optional[str] = None,      # <<< aggiunto
 ) -> None:
-    """
-    Aggiorna un profilo esistente.
-    """
     sql = """
         UPDATE profiles SET
           first_name = ?, last_name = ?, gender = ?, birth_year = ?, city = ?, occupation = ?,
           eyes_color = ?, hair_color = ?, height_cm = ?, smoker = ?, bio = ?, is_active = ?,
-          weight_kg = ?, marital_status = ?
+          weight_kg = ?, marital_status = ?, zodiac_sign = ?
         WHERE id = ?
     """
     params: Tuple[Any, ...] = (
         first_name, last_name, gender, birth_year, city, occupation,
         eyes_color, hair_color, height_cm, smoker, bio, is_active,
-        weight_kg, marital_status, profile_id
+        weight_kg, marital_status, zodiac_sign, profile_id
     )
     with closing(_conn()) as conn, closing(conn.cursor()) as cur:
         try:
@@ -194,9 +168,7 @@ def delete_profile(profile_id: int) -> None:
             conn.rollback()
             raise
 
-# ─────────────────────────────────────────────────────────────────────────────
-# INSERT: MESSAGES
-# ─────────────────────────────────────────────────────────────────────────────
+# ───────────── MESSAGES ─────────────
 def insert_message(
     sender_name: str,
     sender_phone: str,
@@ -207,10 +179,6 @@ def insert_message(
     sender_message: str,
     profile_id: Optional[int] = None,
 ) -> int:
-    """
-    Salva un messaggio nella tabella 'messages'.
-    Ritorna l'id del messaggio creato.
-    """
     created_at = _utc_now_str()
 
     if profile_id is not None:

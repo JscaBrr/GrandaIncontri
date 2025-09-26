@@ -10,22 +10,17 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CONFIGURAZIONE DI BASE
+# CONFIG
 # ─────────────────────────────────────────────────────────────────────────────
-# Prende la connessione da DATABASE_URL (es. postgresql://user:pass@host/dbname)
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL non impostata. Configurala nelle Environment Variables su Render.")
 
-# Render in genere richiede SSL; se la tua URL non lo specifica già, abilitalo così:
+# Render tipicamente richiede SSL
 if "sslmode=" not in DATABASE_URL:
-    if "?" in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL + "&sslmode=require"
-    else:
-        DATABASE_URL = DATABASE_URL + "?sslmode=require"
+    DATABASE_URL = DATABASE_URL + ("&sslmode=require" if "?" in DATABASE_URL else "?sslmode=require")
 
 def _utc_now_str() -> str:
-    """Ritorna l'orario UTC in formato 'YYYY-MM-DD HH:MM:SS'."""
     return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -63,13 +58,10 @@ class Message(TypedDict, total=False):
     created_at: str
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CONNESSIONE E UTILITY
+# CONNESSIONE & UTILITY
 # ─────────────────────────────────────────────────────────────────────────────
 def _conn():
-    """
-    Crea una connessione a PostgreSQL con RealDictCursor così le righe sono dict.
-    Usa context manager (closing) nei punti d’uso.
-    """
+    """Connessione a PostgreSQL con RealDictCursor (righe come dict)."""
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def _rows_to_dicts(rows: Iterable[dict]) -> List[dict]:
@@ -83,14 +75,14 @@ def _row_to_dict(row: Optional[dict]) -> Optional[dict]:
 # ─────────────────────────────────────────────────────────────────────────────
 def get_all_profiles() -> List[Profile]:
     """
-    Ritorna tutti i profili ordinati per created_at desc (NULL/'' in coda), poi id desc.
-    La CASE di SQLite è stata adattata per Postgres.
+    Ritorna tutti i profili ordinati per created_at desc (NULL in coda), poi id desc.
+    Nota: in Postgres created_at è TIMESTAMP → niente confronto con ''.
     """
     sql = """
         SELECT *
         FROM profiles
         ORDER BY
-          CASE WHEN (created_at IS NULL OR created_at = '') THEN 1 ELSE 0 END,
+          CASE WHEN created_at IS NULL THEN 1 ELSE 0 END,
           created_at DESC NULLS LAST,
           id DESC
     """
@@ -119,7 +111,7 @@ def insert_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
-    zodiac_sign: Optional[str] = None, 
+    zodiac_sign: Optional[str] = None,
     created_at: Optional[str] = None,
 ) -> int:
     """
@@ -128,12 +120,12 @@ def insert_profile(
     """
     created_at = created_at or _utc_now_str()
     sql = """
-    INSERT INTO profiles (
-      first_name, last_name, gender, birth_year, city, occupation,
-      eyes_color, hair_color, height_cm, smoker, bio, is_active,
-      created_at, weight_kg, marital_status, zodiac_sign
-    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    RETURNING id
+        INSERT INTO profiles (
+          first_name, last_name, gender, birth_year, city, occupation,
+          eyes_color, hair_color, height_cm, smoker, bio, is_active,
+          created_at, weight_kg, marital_status, zodiac_sign
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
     """
     params: Tuple[Any, ...] = (
         first_name, last_name, gender, birth_year, city, occupation,
@@ -163,14 +155,14 @@ def update_profile(
     is_active: int,
     weight_kg: Optional[int] = None,
     marital_status: Optional[str] = None,
-    zodiac_sign: Optional[str] = None, 
+    zodiac_sign: Optional[str] = None,
 ) -> None:
     sql = """
-    UPDATE profiles SET
-      first_name = %s, last_name = %s, gender = %s, birth_year = %s, city = %s, occupation = %s,
-      eyes_color = %s, hair_color = %s, height_cm = %s, smoker = %s, bio = %s, is_active = %s,
-      weight_kg = %s, marital_status = %s, zodiac_sign = %s
-    WHERE id = %s
+        UPDATE profiles SET
+          first_name = %s, last_name = %s, gender = %s, birth_year = %s, city = %s, occupation = %s,
+          eyes_color = %s, hair_color = %s, height_cm = %s, smoker = %s, bio = %s, is_active = %s,
+          weight_kg = %s, marital_status = %s, zodiac_sign = %s
+        WHERE id = %s
     """
     params: Tuple[Any, ...] = (
         first_name, last_name, gender, birth_year, city, occupation,

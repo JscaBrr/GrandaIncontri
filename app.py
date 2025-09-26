@@ -19,6 +19,7 @@ from flask import (
 )
 
 import profiles_dao
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -408,18 +409,42 @@ def create_or_update_profile():
     # === UPDATE o INSERT ===
     if profile_id:
         profiles_dao.update_profile(
-            int(profile_id),
-            first_name, last_name, gender, birth_year, city, occupation,
-            eyes_color, hair_color, height_cm, smoker, bio, is_active,
-            weight_kg, marital_status, zodiac_sign
+            profile_id=int(profile_id),
+            first_name=first_name,
+            last_name=last_name,
+            gender=gender,
+            birth_year=birth_year,
+            city=city,
+            occupation=occupation,
+            eyes_color=eyes_color,
+            hair_color=hair_color,
+            height_cm=height_cm,
+            smoker=smoker,
+            bio=bio,
+            is_active=is_active,
+            weight_kg=weight_kg,
+            marital_status=marital_status,
+            zodiac_sign=zodiac_sign,
         )
         flash("Profilo aggiornato con successo!", "success")
     else:
         profiles_dao.insert_profile(
-            first_name, last_name, gender, birth_year, city, occupation,
-            eyes_color, hair_color, height_cm, smoker, bio, is_active,
-            weight_kg, marital_status, zodiac_sign,
-            created_at=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            first_name=first_name,
+            last_name=last_name,
+            gender=gender,
+            birth_year=birth_year,
+            city=city,
+            occupation=occupation,
+            eyes_color=eyes_color,
+            hair_color=hair_color,
+            height_cm=height_cm,
+            smoker=smoker,
+            bio=bio,
+            is_active=is_active,
+            weight_kg=weight_kg,
+            marital_status=marital_status,
+            zodiac_sign=zodiac_sign,
+            created_at=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         )
         flash("Profilo creato e pubblicato!", "success")
 
@@ -471,12 +496,20 @@ def send_message():
     agree_privacy = form.get("agree_privacy")
 
     errors = []
-    if not sender_name: errors.append("Il nome è obbligatorio.")
-    if not sender_phone: errors.append("Il cellulare è obbligatorio.")
-    if not sender_email or "@" not in sender_email: errors.append("Email non valida.")
-    if not sender_age: errors.append("L'età è obbligatoria.")
-    if not sender_city: errors.append("La città è obbligatoria.")
-    if not agree_privacy: errors.append("Devi accettare l'informativa privacy.")
+    if not sender_name:
+        errors.append("Il nome è obbligatorio.")
+    if not sender_phone:
+        errors.append("Il cellulare è obbligatorio.")
+    if not sender_email or "@" not in sender_email:
+        errors.append("Email non valida.")
+    if not sender_age:
+        errors.append("L'età è obbligatoria.")
+    elif not sender_age.isdigit():
+        errors.append("L'età deve essere un numero.")
+    if not sender_city:
+        errors.append("La città è obbligatoria.")
+    if not agree_privacy:
+        errors.append("Devi accettare l'informativa privacy.")
 
     if errors:
         for e in errors:
