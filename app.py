@@ -458,9 +458,9 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
 def send_message():
     form = request.form
 
-    profile_id   = form.get("profile_id", "")
+    profile_id   = (form.get("profile_id") or "").strip()
+    pid = int(profile_id) if profile_id.isdigit() else None
     profile_name = form.get("profile_name", "")
-
     sender_name   = (form.get("sender_name") or "").strip()
     sender_phone  = (form.get("sender_phone") or "").strip()
     sender_email  = (form.get("sender_email") or "").strip()
@@ -548,7 +548,8 @@ Messaggio:
             sender_job=sender_job,
             sender_age=int(sender_age) if sender_age.isdigit() else None,
             sender_city=sender_city,
-            sender_message=sender_msg
+            sender_message=sender_msg,
+            profile_id=pid
         )
         saved_ok = True
     except Exception as e:
