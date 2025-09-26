@@ -450,11 +450,22 @@ def create_or_update_profile():
 
     # Redirect pulito (nessun profile_id) così “Inserisci profilo” parte vuoto
     return redirect(url_for("annunci"))
+# =============================================================================
+# INVIO EMAIL (con SSL 465 o STARTTLS 587/25) + timeout
+# =============================================================================
+import ssl
 
-# =============================================================================
-# INVIO EMAIL
-# =============================================================================
-def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bool, str | None]:
+SMTP_TIMEOUT = int(os.getenv("SMTP_TIMEOUT", "12"))
+
+def send_email(subject: str,
+               text_body: str,
+               html_body: str | None = None,
+               reply_to: str | None = None) -> tuple[bool, str | None]:
+    """
+    Invia email:
+      - se SMTP_PORT == 465 usa SSL diretto
+      - altrimenti usa STARTTLS su 587/25
+    """
     try:
         msg = EmailMessage()
         msg["Subject"] = subject
@@ -462,15 +473,26 @@ def send_email(subject: str, body: str, reply_to: str | None = None) -> tuple[bo
         msg["To"] = MAIL_TO
         if reply_to:
             msg["Reply-To"] = reply_to
-        msg.set_content(body)
 
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.ehlo()
-            if SMTP_PORT in (587, 25):
-                server.starttls()
-            if SMTP_USERNAME and SMTP_PASSWORD:
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
+        msg.set_content(text_body)
+        if html_body:
+            msg.add_alternative(html_body, subtype="html")
+
+        if SMTP_PORT == 465:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT, context=context) as server:
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as server:
+                server.ehlo()
+                if SMTP_PORT in (587, 25):
+                    server.starttls(context=ssl.create_default_context())
+                if SMTP_USERNAME and SMTP_PASSWORD:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(msg)
+
         return True, None
     except Exception as e:
         return False, str(e)
@@ -521,15 +543,8 @@ def send_message():
 
         subject = f"Nuovo contatto per {profile_name or 'profilo'}{f' (ID {profile_id})' if profile_id else ''}"
 
-        # ----- EMAIL -----
-        try:
-            msg = EmailMessage()
-            msg["Subject"] = subject
-            msg["From"] = MAIL_FROM
-            msg["To"] = MAIL_TO
-            msg["Reply-To"] = sender_email
-
-            text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
+        # --- corpi email ---
+        text_body = f"""Hai ricevuto un nuovo contatto per il profilo {profile_name or '(senza nome)'}.
 
 Dettagli mittente:
 - Nome: {sender_name}
@@ -542,7 +557,7 @@ Dettagli mittente:
 Messaggio:
 {sender_msg}
 """
-            html_body = f"""
+        html_body = f"""
 <html>
 <body style="font-family: Arial, sans-serif; line-height:1.5;">
   <p>Hai ricevuto un nuovo contatto per il profilo <b>{profile_name or '(senza nome)'}</b>.</p>
@@ -556,20 +571,16 @@ Messaggio:
 </body>
 </html>
 """
-            msg.set_content(text_body)
-            msg.add_alternative(html_body, subtype="html")
 
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-                server.ehlo()
-                if SMTP_PORT in (587, 25):
-                    server.starttls()
-                if SMTP_USERNAME and SMTP_PASSWORD:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(msg)
-            ok, err = True, None
-        except Exception as e:
-            app.logger.exception("Errore invio email")
-            ok, err = False, str(e)
+        # ----- invio email tramite helper con SSL/STARTTLS -----
+        ok, err = send_email(
+            subject=subject,
+            text_body=text_body,
+            html_body=html_body,
+            reply_to=sender_email
+        )
+        if not ok:
+            app.logger.error("Errore invio email: %s", err)
 
         # ----- DB INSERT -----
         try:
@@ -578,7 +589,7 @@ Messaggio:
                 sender_phone=sender_phone,
                 sender_email=sender_email,
                 sender_job=sender_job,
-                sender_age=int(sender_age),     # a questo punto è numerico
+                sender_age=int(sender_age),   # validato numerico sopra
                 sender_city=sender_city,
                 sender_message=sender_msg,
                 profile_id=pid
@@ -601,7 +612,6 @@ Messaggio:
         return redirect(request.referrer or url_for("annunci"))
 
     except Exception:
-        # Cattura QUALSIASI altra eccezione imprevista per evitare 500 silenziosi
         app.logger.error("Eccezione non gestita in /send_message:\n%s", format_exc())
         flash("Si è verificato un errore interno durante l'invio del messaggio.", "danger")
         return redirect(url_for("annunci"))
